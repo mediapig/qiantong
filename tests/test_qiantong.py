@@ -1,8 +1,16 @@
 from collections import Counter
 
+import pytest
+
 from qiantong import japan, rng
 from qiantong.cli import NO_LINE_START, render_lot, render_sensoji, width
 from qiantong.lots import SENSOJI, load_lots
+
+
+@pytest.fixture(autouse=True)
+def offline_rng(monkeypatch):
+    """测试默认不联网：用本机随机数。"""
+    monkeypatch.setattr(rng, "source", rng.EntropySource(fetch=None))
 
 
 def test_hundred_lots():
@@ -64,3 +72,32 @@ def test_detect_elsewhere(monkeypatch):
     monkeypatch.setattr(japan, "_primary_language", lambda: "en-US")
     monkeypatch.setenv("TZ", "Asia/Shanghai")
     assert japan.detect() is None
+
+
+def test_quantum_bytes_are_used_first(monkeypatch):
+    calls = []
+
+    def fake_fetch(length):
+        calls.append(length)
+        return bytes(range(256)) * (length // 256)
+
+    monkeypatch.setattr(rng, "source", rng.EntropySource(fetch=fake_fetch))
+    assert rng.warm_up() == rng.QUANTUM
+    rng.randbelow(100)
+    assert rng.last_source == rng.QUANTUM
+    assert len(rng.source.pool) == rng.POOL_SIZE - rng.CHUNK
+    assert calls == [rng.POOL_SIZE]
+
+
+def test_falls_back_when_quantum_service_fails(monkeypatch):
+    calls = []
+
+    def broken_fetch(length):
+        calls.append(length)
+        raise OSError("network unreachable")
+
+    monkeypatch.setattr(rng, "source", rng.EntropySource(fetch=broken_fetch))
+    assert rng.warm_up() == rng.LOCAL
+    assert 0 <= rng.randbelow(100) < 100
+    assert rng.last_source == rng.LOCAL
+    assert calls == [rng.POOL_SIZE]  # 失败后不再反复联网

@@ -346,6 +346,18 @@ def render_sensoji(lot, inner=INNER):
 # ---------- 主流程 ----------
 
 
+def connect_entropy():
+    """启动时先取一批量子随机数，并告诉用户用的是哪种随机源。"""
+    sys.stdout.write(dim("  正在连接量子随机数服务…"))
+    sys.stdout.flush()
+    label = rng.warm_up()
+    sys.stdout.write("\r\x1b[2K")
+    if label == rng.QUANTUM:
+        say(dim(f"  随机源：{label}"))
+    else:
+        say(dim(f"  量子随机数服务连不上，改用{label}"))
+
+
 def run(keys, temple, reason):
     lots = load_lots(temple)
     say()
@@ -357,6 +369,7 @@ def run(keys, temple, reason):
     else:
         say(red("  ☸  观音灵签  ☸"))
         say(dim("  心中默念姓名、住址与所求之事。空格：开始 / 停止；q：退出"))
+    connect_entropy()
     while True:
         if temple == SENSOJI:
             # 浅草寺不掷筊，直接摇六角签筒
