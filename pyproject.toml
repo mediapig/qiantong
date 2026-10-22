@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qiantong"
+version = "0.1.0"
+description = "命令行观音灵签：掷筊三圣杯，空格摇签，真随机出签"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+qiantong = "qiantong.cli:main"
+chouqian = "qiantong.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+qiantong = ["data/*.json"]
