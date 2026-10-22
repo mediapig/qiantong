@@ -1,4 +1,4 @@
-"""单键读取：不需要回车，支持超时轮询。"""
+"""Single-key input without Enter, with optional timeout polling."""
 
 import os
 import sys
@@ -9,14 +9,14 @@ if os.name == "nt":
 
     class KeyReader:
         def __enter__(self):
-            os.system("")  # 打开 Windows 终端的 ANSI 转义支持
+            os.system("")  # enable ANSI escape handling in the Windows console
             return self
 
         def __exit__(self, *exc):
             return False
 
         def read(self, timeout=None):
-            """读一个按键；超时返回 None。"""
+            """Read one key; return None on timeout."""
             deadline = None if timeout is None else time.monotonic() + timeout
             while True:
                 if msvcrt.kbhit():
@@ -41,7 +41,7 @@ else:
         def __enter__(self):
             self.fd = sys.stdin.fileno()
             self.saved = termios.tcgetattr(self.fd)
-            tty.setcbreak(self.fd)  # 关闭行缓冲和回显，保留 Ctrl-C
+            tty.setcbreak(self.fd)  # no line buffering or echo, but keep Ctrl-C
             return self
 
         def __exit__(self, *exc):
@@ -49,7 +49,7 @@ else:
             return False
 
         def read(self, timeout=None):
-            """读一个按键；超时返回 None。"""
+            """Read one key; return None on timeout."""
             ready, _, _ = select.select([self.fd], [], [], timeout)
             if not ready:
                 return None

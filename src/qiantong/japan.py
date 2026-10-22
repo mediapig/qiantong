@@ -1,4 +1,4 @@
-"""判断当前环境是否在日本：系统语言是日语，或时区是日本。"""
+"""Detect whether we are in Japan: Japanese system language or a Japanese time zone."""
 
 import os
 import re
@@ -10,14 +10,14 @@ JAPAN_ZONES = ("Asia/Tokyo", "Japan")
 
 
 def _primary_language():
-    """系统首选语言，如 ja、zh-Hans-CN；取不到返回空串。"""
+    """Preferred system language such as ja or zh-Hans-CN; empty string if unknown."""
     if sys.platform == "darwin":
-        # 终端里的 LANG 常常是 en_US，系统界面语言要从偏好设置读
+        # LANG in a terminal is often en_US; the UI language lives in the user defaults
         try:
             out = subprocess.run(
                 ["defaults", "read", "-g", "AppleLanguages"], capture_output=True, text=True, timeout=2
             ).stdout
-            # 输出形如 ( "ja-JP", "en-JP" )，第一项为首选语言
+            # Output looks like ( "ja-JP", "en-JP" ); the first entry is the preferred language
             langs = re.findall(r"[A-Za-z][\w-]*", out)
             if langs:
                 return langs[0]
@@ -38,7 +38,7 @@ def _primary_language():
 
 
 def _timezone():
-    """当前时区名，如 Asia/Tokyo、JST。"""
+    """Current time zone name, e.g. Asia/Tokyo or JST."""
     tz = os.environ.get("TZ", "").lstrip(":")
     if tz:
         return tz
@@ -52,7 +52,7 @@ def _timezone():
 
 
 def detect():
-    """在日本则返回判断依据（一句中文），否则返回 None。"""
+    """Return the reason (a Chinese sentence shown to the user) if in Japan, else None."""
     lang = _primary_language()
     if lang.lower().startswith("ja"):
         return f"系统语言为日语（{lang}）"

@@ -9,7 +9,7 @@ from qiantong.lots import SENSOJI, load_lots
 
 @pytest.fixture(autouse=True)
 def offline_rng(monkeypatch):
-    """测试默认不联网：用本机随机数。"""
+    """Tests stay offline by default and use local randomness."""
     monkeypatch.setattr(rng, "source", rng.EntropySource(fetch=None))
 
 
@@ -24,7 +24,7 @@ def test_hundred_lots():
 def test_randbelow_range_and_spread():
     counts = Counter(rng.randbelow(100) for _ in range(20000))
     assert set(counts) == set(range(100))
-    assert min(counts.values()) > 100  # 期望 200，远离 0 即可
+    assert min(counts.values()) > 100  # expected 200; just needs to be well above 0
 
 
 def test_coin_is_balanced():
@@ -100,4 +100,4 @@ def test_falls_back_when_quantum_service_fails(monkeypatch):
     assert rng.warm_up() == rng.LOCAL
     assert 0 <= rng.randbelow(100) < 100
     assert rng.last_source == rng.LOCAL
-    assert calls == [rng.POOL_SIZE]  # 失败后不再反复联网
+    assert calls == [rng.POOL_SIZE]  # no repeated network attempts after a failure

@@ -1,4 +1,4 @@
-"""命令行入口：掷筊三圣杯 → 摇签筒 → 出签解签。"""
+"""Command-line entry: three holy jiaobei tosses → shake the lot tube → read the lot."""
 
 import argparse
 import os
@@ -11,8 +11,8 @@ from qiantong import __version__, japan, rng
 from qiantong.keys import KeyReader
 from qiantong.lots import GUANYIN, SENSOJI, load_lots
 
-FRAME = 0.08  # 动画每帧秒数
-THROWS = 3  # 需要连续圣杯的次数
+FRAME = 0.08  # seconds per animation frame
+THROWS = 3  # consecutive holy tosses required
 
 ORDINALS = "一二三四五六七八九十"
 
@@ -21,7 +21,7 @@ class Quit(Exception):
     pass
 
 
-# ---------- 终端输出 ----------
+# ---------- terminal output ----------
 
 COLOR = sys.stdout.isatty() and "NO_COLOR" not in os.environ
 
@@ -43,7 +43,7 @@ def dim(t):
 
 
 def width(text):
-    """终端显示宽度：中文等全角字符占两格，忽略 ANSI 颜色码。"""
+    """Display width in the terminal: wide CJK characters take two cells; ANSI codes take none."""
     total, i = 0, 0
     while i < len(text):
         if text[i] == "\x1b":
@@ -58,12 +58,12 @@ NO_LINE_START = "，。、；：！？）」』”’"
 
 
 def wrap_cjk(text, cells):
-    """按显示宽度折行。"""
+    """Wrap text by display width."""
     lines, line = [], ""
     for ch in text:
         if width(line + ch) > cells:
             if ch in NO_LINE_START and len(line) > 1:
-                lines.append(line[:-1])  # 标点不放行首：带上前一个字一起换行
+                lines.append(line[:-1])  # never start a line with punctuation: carry the previous character along
                 line = line[-1]
             else:
                 lines.append(line)
@@ -75,7 +75,7 @@ def wrap_cjk(text, cells):
 
 
 class Canvas:
-    """原地重绘一块固定行数的区域，用于动画。"""
+    """Redraw a block of lines in place, for animation."""
 
     def __init__(self):
         self.height = 0
@@ -83,11 +83,11 @@ class Canvas:
     def draw(self, lines):
         out = []
         if self.height:
-            out.append(f"\x1b[{self.height}F")  # 回到上次绘制区域的开头
+            out.append(f"\x1b[{self.height}F")  # move back to the top of the previous drawing
         for line in lines:
             out.append("\x1b[2K" + line + "\n")
         extra = self.height - len(lines)
-        if extra > 0:  # 新画面更矮：清掉多出的旧行再回来
+        if extra > 0:  # new frame is shorter: clear the leftover lines and come back
             out.append("\x1b[2K\n" * extra + f"\x1b[{extra}F")
         sys.stdout.write("".join(out))
         sys.stdout.flush()
@@ -99,11 +99,11 @@ def say(text=""):
     sys.stdout.flush()
 
 
-# ---------- 按键控制 ----------
+# ---------- key control ----------
 
 
 def wait_space(keys, prompt):
-    """提示后等待空格；q 或 Esc 退出。"""
+    """Show a prompt and wait for space; q or Esc quits."""
     keys.flush()
     say(dim(prompt))
     while True:
@@ -115,7 +115,7 @@ def wait_space(keys, prompt):
 
 
 def animate(keys, frame_fn):
-    """反复绘制 frame_fn(i) 直到再按空格，返回按下那一刻的纳秒时间戳。"""
+    """Draw frame_fn(i) repeatedly until space is pressed; return the press time in nanoseconds."""
     canvas = Canvas()
     i = 0
     keys.flush()
@@ -129,7 +129,7 @@ def animate(keys, frame_fn):
         i += 1
 
 
-# ---------- 掷筊 ----------
+# ---------- jiaobei tossing ----------
 
 
 def verdict(a, b):
@@ -140,20 +140,20 @@ def verdict(a, b):
     return dim("两阴 · 阴杯 ✗")
 
 
-# 月牙形筊杯，每个造型两行、每行 7 格。
-# 平面朝上（两角朝上）为阳，凸面朝上（两角朝下）为阴。
+# Crescent-shaped jiaobei blocks, each pose two rows of 7 cells.
+# Flat side up (horns up) is yang; round side up (horns down) is yin.
 MOON_UP = ("█▖   ▗█", " ▀███▀ ")
 MOON_RIGHT = (" ▄██▀▀ ", " ▀██▄▄ ")
 MOON_DOWN = (" ▄███▄ ", "█▘   ▝█")
 MOON_LEFT = (" ▀▀██▄ ", " ▄▄██▀ ")
-SPIN = [MOON_UP, MOON_RIGHT, MOON_DOWN, MOON_LEFT]  # 翻转一周
+SPIN = [MOON_UP, MOON_RIGHT, MOON_DOWN, MOON_LEFT]  # one full flip
 BLANK = (" " * 7, " " * 7)
-AIR = 5  # 地面以上的行数
-FLIGHT = [1, 2, 3, 3, 2, 1]  # 空中循环的高度（月牙底边所在行）
+AIR = 5  # rows above the ground
+FLIGHT = [1, 2, 3, 3, 2, 1]  # looping flight heights (row of the crescent's lower edge)
 
 
 def moon(is_yang):
-    """落定后的筊杯：阳红、阴金。"""
+    """A landed block: yang in red, yin in gold."""
     art = MOON_UP if is_yang else MOON_DOWN
     return tuple((red if is_yang else gold)(row) for row in art)
 
@@ -163,7 +163,7 @@ def spinning(step):
 
 
 def toss_scene(label, cells, status):
-    """画一帧掷筊场景。cells 为两枚筊杯的 (高度, 造型)，高度 0 表示落在地上。"""
+    """Draw one frame of the toss. `cells` holds (height, pose) for both blocks; height 0 is on the ground."""
     rows = []
     for row in range(AIR - 1, -1, -1):
         parts = []
@@ -181,7 +181,7 @@ def toss_scene(label, cells, status):
 
 
 def throw_record(label, a, b):
-    """落定后收成两行的记录。"""
+    """Two-line record left behind once the blocks have landed."""
     ma, mb = moon(a), moon(b)
     names = "  ".join("⚊阳" if x else "⚋阴" for x in (a, b))
     return [
@@ -191,7 +191,7 @@ def throw_record(label, a, b):
 
 
 def throw_once(keys, n):
-    """一次掷筊：空格抛起翻滚，再按空格落地。返回是否圣杯。"""
+    """One toss: space throws the blocks, space again lands them. Return whether it is holy."""
     label = f"第{ORDINALS[n]}掷"
     wait_space(keys, f"按空格掷出第{ORDINALS[n]}次筊杯")
 
@@ -207,7 +207,7 @@ def throw_once(keys, n):
     moment, canvas = animate(keys, frame)
     a, b = rng.coin(moment), rng.coin(moment + 1)
 
-    # 落地：从当前高度一格格掉下来，边掉边转，触地后弹一下再停稳
+    # landing: fall one row at a time while spinning, bounce once, then settle
     i = state["i"]
     heights = [h for h, _ in flying(i)]
     spin = i
@@ -228,7 +228,7 @@ def throw_once(keys, n):
 
 
 def ask_permission(keys):
-    """连掷三次，必须三次都是圣杯才可求签。"""
+    """Toss until three holy results in a row; only then may a lot be drawn."""
     while True:
         say()
         say(gold("【掷筊请示】") + " 需连得三次圣杯（一阴一阳），方可求签")
@@ -241,11 +241,11 @@ def ask_permission(keys):
         say(dim("  未得三圣杯，菩萨未允。请静心默念所求之事，再来一次。"))
 
 
-# ---------- 摇签 ----------
+# ---------- shaking the lot tube ----------
 
 
 def tube_frame(i, label):
-    shift = " " * (i % 4 if i % 4 < 3 else 1)  # 左右晃动
+    shift = " " * (i % 4 if i % 4 < 3 else 1)  # sway left and right
     sticks = "".join("╿" if (i + k) % 3 else "│" for k in range(7))
     return [
         f"    {shift} {sticks}",
@@ -257,7 +257,7 @@ def tube_frame(i, label):
 
 
 def pop_frames(label):
-    """一支签从签筒里跳出来。"""
+    """A stick pops out of the tube."""
     frames = []
     for rise in range(1, 4):
         top = ["" for _ in range(3 - rise)] + [f"          {red('┃')}" for _ in range(rise)]
@@ -285,13 +285,13 @@ def draw_lot(keys, lots, label, prompt):
     return lot
 
 
-# ---------- 签文 ----------
+# ---------- lot text ----------
 
 LEVEL_COLOR = {
     "上签": red, "中签": gold, "下签": dim,
     "大吉": red, "吉": red, "半吉": gold, "小吉": gold, "末小吉": gold, "末吉": gold, "凶": dim,
 }
-INNER = 36  # 签文框内宽
+INNER = 36  # inner width of the lot box
 
 
 def boxed(body, inner=INNER):
@@ -330,7 +330,7 @@ def render_sensoji(lot, inner=INNER):
     ]
     for line in lot["explanation"]:
         if line in poem or (len(line) == 5 and "，" not in line and "。" not in line):
-            body.append(gold("  " + line))  # 逐句解说的诗句标题
+            body.append(gold("  " + line))  # poem line heading its explanation
         else:
             body += ["    " + part for part in wrap_cjk(line, inner - 4)]
     body += ["", "运势："]
@@ -343,11 +343,11 @@ def render_sensoji(lot, inner=INNER):
     return boxed(body, inner)
 
 
-# ---------- 主流程 ----------
+# ---------- main flow ----------
 
 
 def connect_entropy():
-    """启动时先取一批量子随机数，并告诉用户用的是哪种随机源。"""
+    """Prefetch quantum random bytes at startup and tell the user which source is in use."""
     sys.stdout.write(dim("  正在连接量子随机数服务…"))
     sys.stdout.flush()
     label = rng.warm_up()
@@ -372,7 +372,7 @@ def run(keys, temple, reason):
     connect_entropy()
     while True:
         if temple == SENSOJI:
-            # 浅草寺不掷筊，直接摇六角签筒
+            # Sensō-ji has no jiaobei: go straight to the hexagonal tube
             lot = draw_lot(keys, lots, " みくじ", "按空格摇动签筒")
             box = render_sensoji(lot)
         else:
@@ -408,7 +408,7 @@ def main(argv=None):
     else:
         temple = args.temple
 
-    sys.stdout.write("\x1b[?25l")  # 隐藏光标
+    sys.stdout.write("\x1b[?25l")  # hide cursor
     try:
         with KeyReader() as keys:
             run(keys, temple, reason)
@@ -416,7 +416,7 @@ def main(argv=None):
         say()
         say(dim("  阿弥陀佛，善哉。"))
     finally:
-        sys.stdout.write("\x1b[?25h")  # 恢复光标
+        sys.stdout.write("\x1b[?25h")  # show cursor
         sys.stdout.flush()
     return 0
 

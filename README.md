@@ -1,69 +1,79 @@
-# qiantong · 命令行观音灵签
+# qiantong · Guanyin fortune sticks in your terminal
 
-在终端里求一支观音灵签：先掷筊请示，连得三次圣杯后摇签筒出签，最后显示签诗与解签。
+Draw a Guanyin fortune stick (观音灵签) in the terminal: first ask for permission by tossing jiaobei blocks (掷筊), and once you get three holy tosses (圣杯) in a row, shake the lot tube and read your fortune poem and its interpretation.
 
-## 安装
+The interface and the fortune texts are in Chinese.
 
-需要 Python 3.9+，无第三方依赖。
+## Installation
+
+Requires Python 3.9+. No third-party dependencies.
 
 ```bash
-# 推荐：装成独立命令
+# Recommended: install as a standalone command
+uv tool install qiantong
+# or
+pipx install qiantong
+# or
+pip install qiantong
+
+# Latest code from GitHub
 uv tool install git+https://github.com/mediapig/qiantong.git
-# 或
-pipx install git+https://github.com/mediapig/qiantong.git
-
-# 本地开发
-pip install -e .
 ```
 
-安装后可用 `qiantong` 或 `chouqian` 启动。
+After installing, run `qiantong` or `chouqian`.
 
-## 玩法
+## How to play
 
-| 按键 | 作用 |
+| Key | Action |
 | --- | --- |
-| 空格 | 开始 / 停止（按一次开始，再按一次停止） |
-| q / Esc / Ctrl-C | 退出 |
+| Space | Start / stop (press once to start, again to stop) |
+| q / Esc / Ctrl-C | Quit |
 
-1. **掷筊请示**：每掷一次，空格开始翻滚，再按空格落地，得到两枚爻：
-   - 一阴一阳：圣杯 ✓
-   - 两阳：笑杯 ✗
-   - 两阴：阴杯 ✗
+1. **Ask with jiaobei (掷筊请示).** For each toss, press space to throw the two crescent-shaped blocks and press space again to land them. Each block lands yin or yang:
+   - one yin, one yang: holy toss (圣杯) ✓
+   - two yang: laughing toss (笑杯) ✗
+   - two yin: yin toss (阴杯) ✗
 
-   必须连续三次都是圣杯，才可求签；中途失败就从第一掷重来。
-2. **摇签**：空格开始摇签筒，再按空格停下，一支签跳出。
-3. **解签**：显示签号、吉凶、典故、签诗、解曰。
+   You need three holy tosses in a row before you may draw a lot. Any other result starts over from the first toss.
+2. **Shake the tube (摇签).** Press space to start shaking and space again to stop. A stick pops out. Its number stays hidden until the result is shown.
+3. **Read the lot (解签).** Shows the lot number, its rank, the story behind it, the poem and the interpretation.
 
-## 在日本：浅草寺观音百签
+## In Japan: Sensō-ji fortunes
 
-如果检测到以下任一情况，签会换成东京浅草寺的观音百签（大吉 / 吉 / 半吉 / 小吉 / 末小吉 / 末吉 / 凶），并且跳过掷筊，直接摇签：
+If either of the following is detected, the lots switch to the 100 Kannon fortunes of Sensō-ji in Asakusa, Tokyo (ranks 大吉 / 吉 / 半吉 / 小吉 / 末小吉 / 末吉 / 凶), and the jiaobei step is skipped:
 
-- 系统首选语言是日语（macOS 读系统偏好设置，Windows 读界面语言，其他系统读 `LANG` 等环境变量）；
-- 时区是日本（`Asia/Tokyo`、`Japan`、JST）。
+- the preferred system language is Japanese (macOS reads the system preferences, Windows reads the UI language, other systems read `LANG` and related variables);
+- the time zone is Japan (`Asia/Tokyo`, `Japan`, JST).
 
-也可以手动指定：
+You can also choose explicitly:
 
 ```bash
-qiantong --temple sensoji   # 浅草寺
-qiantong --temple guanyin   # 观音灵签
-TZ=Asia/Tokyo qiantong      # 模拟人在日本
+qiantong --temple sensoji   # Sensō-ji
+qiantong --temple guanyin   # Guanyin
+TZ=Asia/Tokyo qiantong      # pretend to be in Japan
 ```
 
-命令行工具拿不到 GPS 定位，所以不按地理位置判断。
+A command-line tool has no access to GPS, so location is not used.
 
-## 随机性
+## Randomness
 
-结果都在按下“停止”空格的那一刻决定，动画只是表现，与结果无关。
+Every result is decided at the moment you press space to stop. The animation is only for show and has no effect on the outcome.
 
-**默认用量子随机数。** 启动时向 [OTH Regensburg 数字化实验室的量子随机数服务](https://lfdr.de/QRNG/) 取 1024 字节存进缓冲池，用完再取。这些字节由 ID Quantique 的 Quantis 量子随机数硬件（PCIe 卡）产生，来源是量子物理过程本身的随机性。
+**Quantum random numbers by default.** At startup the program fetches 1024 bytes from the [quantum random number service of the OTH Regensburg Laboratory for Digitalisation](https://lfdr.de/QRNG/) into a pool, and fetches more when the pool runs out. The bytes are produced by ID Quantique's Quantis quantum random number hardware (a PCIe card), whose randomness comes from quantum physical processes.
 
-**取不到就退回本机。** 断网、超时（3 秒）或服务异常时，改用 Python 标准库 `secrets`，也就是操作系统的密码学随机数。失败一次后，本次运行不再联网，免得每次抽签都卡住。启动时会写明这次用的是哪种随机源。
+**Local fallback.** If the service is unreachable, times out (3 seconds) or misbehaves, the program falls back to Python's standard `secrets` module, i.e. the operating system's cryptographic random number generator. After one failure it stays offline for the rest of the run so that draws never stall. The startup line tells you which source is in use.
 
-每次取 32 字节随机数，和按键时刻的纳秒级时间戳拼接，做 SHA-256，再用拒绝采样映射到目标范围。所以每支签的概率都严格是 1/100，每枚筊杯的阴阳各占 1/2。
+Each draw takes 32 random bytes, appends the nanosecond timestamp of your key press, hashes them with SHA-256, and maps the result onto the target range by rejection sampling. Every lot therefore has a probability of exactly 1/100, and each block is yin or yang with probability exactly 1/2.
 
-## 签文来源
+## Data sources
 
-- 观音灵签：取自 [yanxinyu777-beep/guanyin-lingqian-100](https://github.com/yanxinyu777-beep/guanyin-lingqian-100)。
-- 浅草寺观音百签（中文译文）：取自 [Tamshen/senso-ji-stick-data](https://github.com/Tamshen/senso-ji-stick-data)，第 6–9 签的运势条目整理过格式。
+- Guanyin lots: from [yanxinyu777-beep/guanyin-lingqian-100](https://github.com/yanxinyu777-beep/guanyin-lingqian-100).
+- Sensō-ji Kannon lots (Chinese translation): from [Tamshen/senso-ji-stick-data](https://github.com/Tamshen/senso-ji-stick-data); the fortune entries of lots 6–9 were reformatted.
 
-观音灵签各地版本的用字略有出入，仅供娱乐和传统文化参考。
+Guanyin lot texts vary slightly between regions. For entertainment and cultural interest only.
+
+## License
+
+The code is released under the [MIT License](https://github.com/mediapig/qiantong/blob/main/LICENSE): anyone may use, modify and distribute it freely.
+
+The fortune data in `src/qiantong/data/` comes from the third-party repositories listed above. It is not covered by the MIT License, and its copyright remains with the original authors.
