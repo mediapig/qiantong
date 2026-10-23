@@ -174,6 +174,13 @@ def test_ansi_animation_backend_redraws_frames():
     assert "\x1b[2F" in rendered  # second frame moves back over the first two lines
 
 
+def test_plain_animation_backend_has_no_cursor_controls():
+    output = StringIO()
+    backend = animation.create_backend("plain", output)
+    backend.draw(["first", "frame"])
+    assert output.getvalue() == "first\nframe\n"
+
+
 @pytest.fixture(autouse=True)
 def no_ip_lookup(monkeypatch):
     """Tests never look up the public IP."""

@@ -22,6 +22,12 @@ uv tool install git+https://github.com/mediapig/qiantong.git
 
 After installing, run `qiantong` or `chouqian`.
 
+The default animation uses ANSI cursor controls. For serial consoles, older terminals or log output, use the portable line-by-line backend:
+
+```bash
+QIANTONG_ANIMATION=plain qiantong
+```
+
 ## How to play
 
 | Key | Action |

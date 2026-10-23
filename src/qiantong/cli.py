@@ -11,7 +11,7 @@ import time
 import unicodedata
 
 from qiantong import __version__, region, rng
-from qiantong.animation import AnsiAnimationBackend, AnimationBackend
+from qiantong.animation import AnsiAnimationBackend, AnimationBackend, create_backend
 from qiantong.keys import KeyReader
 from qiantong.lots import load_plugin_lots
 from qiantong.plugins import discover, get as get_plugin, ids as plugin_ids
@@ -104,7 +104,7 @@ def wait_space(keys, prompt):
 
 def animate(keys, frame_fn, backend=None):
     """Draw frames through an animation backend until space is pressed."""
-    canvas = backend or AnsiAnimationBackend()
+    canvas = backend or create_backend()
     i = 0
     keys.flush()
     while True:

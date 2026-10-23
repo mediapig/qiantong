@@ -5,6 +5,7 @@ default implementation uses ANSI cursor movement; richer front ends can
 implement ``AnimationBackend`` without touching randomness or ritual logic.
 """
 
+import os
 import sys
 
 
@@ -34,3 +35,24 @@ class AnsiAnimationBackend(AnimationBackend):
         self.output.write("".join(out))
         self.output.flush()
         self.height = len(lines)
+
+
+class PlainAnimationBackend(AnimationBackend):
+    """Portable fallback for terminals that do not support cursor controls."""
+
+    def __init__(self, output=None):
+        self.output = output or sys.stdout
+
+    def draw(self, lines):
+        self.output.write("\n".join(lines) + "\n")
+        self.output.flush()
+
+
+def create_backend(name=None, output=None):
+    """Create the configured backend; ``plain`` is useful over serial/SSH."""
+    name = (name or os.environ.get("QIANTONG_ANIMATION", "ansi")).lower()
+    if name == "plain":
+        return PlainAnimationBackend(output)
+    if name == "ansi":
+        return AnsiAnimationBackend(output)
+    raise ValueError(f"unknown animation backend: {name}")
