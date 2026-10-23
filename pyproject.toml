@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "Temple fortune sticks in the terminal: Guanyin lots (观音灵签), Taiwan's Sixty Jiazi lots, Sensō-ji omikuji, with jiaobei tossing and quantum randomness"
 readme = "README.md"
 requires-python = ">=3.8"
-license = "MIT"
+license = { text = "MIT" }
 authors = [{ name = "mediapig", email = "ky8contact9@gmail.com" }]
 keywords = ["观音灵签", "六十甲子籤", "抽签", "fortune", "omikuji", "divination", "cli", "quantum random"]
 classifiers = [
