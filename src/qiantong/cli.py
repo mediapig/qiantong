@@ -11,6 +11,7 @@ import time
 import unicodedata
 
 from qiantong import __version__, region, rng
+from qiantong.animation import AnsiAnimationBackend, AnimationBackend
 from qiantong.keys import KeyReader
 from qiantong.lots import load_plugin_lots
 from qiantong.plugins import discover, get as get_plugin, ids as plugin_ids
@@ -78,24 +79,7 @@ def wrap_cjk(text, cells):
     return lines
 
 
-class Canvas:
-    """Redraw a block of lines in place, for animation."""
-
-    def __init__(self):
-        self.height = 0
-
-    def draw(self, lines):
-        out = []
-        if self.height:
-            out.append(f"\x1b[{self.height}F")  # move back to the top of the previous drawing
-        for line in lines:
-            out.append("\x1b[2K" + line + "\n")
-        extra = self.height - len(lines)
-        if extra > 0:  # new frame is shorter: clear the leftover lines and come back
-            out.append("\x1b[2K\n" * extra + f"\x1b[{extra}F")
-        sys.stdout.write("".join(out))
-        sys.stdout.flush()
-        self.height = len(lines)
+Canvas = AnsiAnimationBackend  # backwards-compatible name for callers of the CLI module
 
 
 def say(text=""):
@@ -118,9 +102,9 @@ def wait_space(keys, prompt):
             raise Quit
 
 
-def animate(keys, frame_fn):
-    """Draw frame_fn(i) repeatedly until space is pressed; return the press time in nanoseconds."""
-    canvas = Canvas()
+def animate(keys, frame_fn, backend=None):
+    """Draw frames through an animation backend until space is pressed."""
+    canvas = backend or AnsiAnimationBackend()
     i = 0
     keys.flush()
     while True:

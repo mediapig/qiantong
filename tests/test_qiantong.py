@@ -1,8 +1,9 @@
 from collections import Counter
+from io import StringIO
 
 import pytest
 
-from qiantong import location, plugins, region, rng
+from qiantong import animation, location, plugins, region, rng
 from qiantong.cli import (
     NO_LINE_START,
     RENDERERS,
@@ -161,6 +162,16 @@ def test_gpsd_tpv_location(monkeypatch):
     monkeypatch.delenv("QIANTONG_LOCATION", raising=False)
     monkeypatch.setattr(location.socket, "create_connection", lambda *_args, **_kwargs: FakeSocket())
     assert location._gpsd_location() == location.Location(35.68, 139.76, 5.0)
+
+
+def test_ansi_animation_backend_redraws_frames():
+    output = StringIO()
+    backend = animation.AnsiAnimationBackend(output)
+    backend.draw(["first", "frame"])
+    backend.draw(["second"])
+    rendered = output.getvalue()
+    assert "first" in rendered and "second" in rendered
+    assert "\x1b[2F" in rendered  # second frame moves back over the first two lines
 
 
 @pytest.fixture(autouse=True)
