@@ -5,18 +5,19 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "qiantong"
 version = "0.1.0"
-description = "Guanyin fortune sticks (观音灵签) in the terminal: jiaobei tossing, lot drawing, quantum randomness"
+description = "Temple fortune sticks in the terminal: Guanyin lots (观音灵签), Taiwan's Sixty Jiazi lots, Sensō-ji omikuji, with jiaobei tossing and quantum randomness"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "mediapig", email = "ky8contact9@gmail.com" }]
-keywords = ["观音灵签", "抽签", "fortune", "omikuji", "divination", "cli", "quantum random"]
+keywords = ["观音灵签", "六十甲子籤", "抽签", "fortune", "omikuji", "divination", "cli", "quantum random"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: End Users/Desktop",
     "Natural Language :: Chinese (Simplified)",
+    "Natural Language :: Chinese (Traditional)",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",

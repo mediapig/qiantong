@@ -38,6 +38,12 @@ After installing, run `qiantong` or `chouqian`.
 2. **Shake the tube (摇签).** Press space to start shaking and space again to stop. A stick pops out. Its number stays hidden until the result is shown.
 3. **Read the lot (解签).** Shows the lot number, its rank, the story behind it, the poem and the interpretation.
 
+## In Taiwan: Sixty Jiazi lots (六十甲子籤)
+
+If the preferred system language is Traditional Chinese (Taiwan) (`zh-Hant-TW`, `zh_TW` and the like) or the time zone is `Asia/Taipei`, the lots switch to the Sixty Jiazi lots used at nearly every Mazu temple in Taiwan. Each lot is named after a pair from the sexagenary cycle, from 甲子 to 癸亥, and shows its hexagram, element, poem, stories and answers for common questions (career, marriage, health, lost items…), in the original Traditional Chinese.
+
+The jiaobei step stays, and follows the Taiwanese custom: after the stick pops out, toss once more to confirm it is the right one. Without a holy toss, the stick goes back into the tube and you shake again.
+
 ## In Japan: Sensō-ji fortunes
 
 If either of the following is detected, the lots switch to the 100 Kannon fortunes of Sensō-ji in Asakusa, Tokyo (ranks 大吉 / 吉 / 半吉 / 小吉 / 末小吉 / 末吉 / 凶), and the jiaobei step is skipped:
@@ -49,11 +55,13 @@ You can also choose explicitly:
 
 ```bash
 qiantong --temple sensoji   # Sensō-ji
+qiantong --temple taiwan    # Sixty Jiazi lots
 qiantong --temple guanyin   # Guanyin
 TZ=Asia/Tokyo qiantong      # pretend to be in Japan
+TZ=Asia/Taipei qiantong     # pretend to be in Taiwan
 ```
 
-A command-line tool has no access to GPS, so location is not used.
+The system language is checked before the time zone. A command-line tool has no access to GPS, so location is not used.
 
 ## Randomness
 
@@ -68,6 +76,7 @@ Each draw takes 32 random bytes, appends the nanosecond timestamp of your key pr
 ## Data sources
 
 - Guanyin lots: from [yanxinyu777-beep/guanyin-lingqian-100](https://github.com/yanxinyu777-beep/guanyin-lingqian-100).
+- Sixty Jiazi lots: from [DestinyLab/lottery-poetry-sixty-jiazi](https://github.com/DestinyLab/lottery-poetry-sixty-jiazi) (MIT License, by Lance He), converted from YAML to JSON.
 - Sensō-ji Kannon lots (Chinese translation): from [Tamshen/senso-ji-stick-data](https://github.com/Tamshen/senso-ji-stick-data); the fortune entries of lots 6–9 were reformatted.
 
 Guanyin lot texts vary slightly between regions. For entertainment and cultural interest only.
@@ -76,4 +85,4 @@ Guanyin lot texts vary slightly between regions. For entertainment and cultural 
 
 The code is released under the [MIT License](https://github.com/mediapig/qiantong/blob/main/LICENSE): anyone may use, modify and distribute it freely.
 
-The fortune data in `src/qiantong/data/` comes from the third-party repositories listed above. It is not covered by the MIT License, and its copyright remains with the original authors.
+The fortune data in `src/qiantong/data/` comes from the third-party repositories listed above, and its copyright remains with the original authors. The Sixty Jiazi data (`taiwan.json`) is under the MIT License of its source repository; the Guanyin and Sensō-ji data come without a license and are not covered by the MIT License of this project.

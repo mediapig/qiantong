@@ -1,4 +1,7 @@
-"""Command-line entry: three holy jiaobei tosses → shake the lot tube → read the lot."""
+"""Command-line entry: three holy jiaobei tosses → shake the lot tube → read the lot.
+
+In Taiwan one more holy toss confirms the drawn stick; Sensō-ji skips the jiaobei entirely.
+"""
 
 import argparse
 import os
@@ -7,9 +10,9 @@ import textwrap
 import time
 import unicodedata
 
-from qiantong import __version__, japan, rng
+from qiantong import __version__, region, rng
 from qiantong.keys import KeyReader
-from qiantong.lots import GUANYIN, SENSOJI, load_lots
+from qiantong.lots import GUANYIN, SENSOJI, TAIWAN, load_lots
 
 FRAME = 0.08  # seconds per animation frame
 THROWS = 3  # consecutive holy tosses required
@@ -190,10 +193,12 @@ def throw_record(label, a, b):
     ]
 
 
-def throw_once(keys, n):
-    """One toss: space throws the blocks, space again lands them. Return whether it is holy."""
-    label = f"第{ORDINALS[n]}掷"
-    wait_space(keys, f"按空格掷出第{ORDINALS[n]}次筊杯")
+def throw_once(keys, label, prompt):
+    """One toss: space throws the blocks, space again lands them. Return whether it is holy.
+
+    `label` must be 6 cells wide so the two-line record stays aligned.
+    """
+    wait_space(keys, prompt)
 
     def flying(i):
         return [(FLIGHT[(i + k * 3) % len(FLIGHT)], spinning(i + k * 2)) for k in range(2)]
@@ -227,18 +232,19 @@ def throw_once(keys, n):
     return a != b
 
 
-def ask_permission(keys):
+def ask_permission(keys, deity):
     """Toss until three holy results in a row; only then may a lot be drawn."""
     while True:
         say()
         say(gold("【掷筊请示】") + " 需连得三次圣杯（一阴一阳），方可求签")
         say(dim("  月牙两角朝上为阳，两角朝下为阴"))
-        if all(throw_once(keys, n) for n in range(THROWS)):
+        tosses = (throw_once(keys, f"第{n}掷", f"按空格掷出第{n}次筊杯") for n in ORDINALS[:THROWS])
+        if all(tosses):  # lazy: stop at the first toss that is not holy
             say()
-            say(red("  三圣杯，菩萨应允。"))
+            say(red(f"  三圣杯，{deity}应允。"))
             return
         say()
-        say(dim("  未得三圣杯，菩萨未允。请静心默念所求之事，再来一次。"))
+        say(dim(f"  未得三圣杯，{deity}未允。请静心默念所求之事，再来一次。"))
 
 
 # ---------- shaking the lot tube ----------
@@ -283,6 +289,19 @@ def draw_lot(keys, lots, label, prompt):
         canvas.draw(frame)
         time.sleep(0.25)
     return lot
+
+
+def confirm_lot(keys, lots, label):
+    """Taiwanese custom: one more holy toss confirms the drawn stick; otherwise put it back and shake again."""
+    prompt = "按空格开始摇签筒"
+    while True:
+        lot = draw_lot(keys, lots, label, prompt)
+        say()
+        say(gold("【掷筊确认】") + " 请示是否为这支签，得一圣杯方可")
+        if throw_once(keys, "确　认", "按空格掷筊确认"):
+            return lot
+        say(dim("  妈祖未允此签，把签放回签筒，重新摇签。"))
+        prompt = "按空格重新摇签筒"
 
 
 # ---------- lot text ----------
@@ -343,6 +362,34 @@ def render_sensoji(lot, inner=INNER):
     return boxed(body, inner)
 
 
+def render_taiwan(lot, inner=INNER):
+    body = [
+        red(f"六十甲子签 · 第{lot['ordinal']}签") + "  " + gold(lot["name"]),
+        "卦象：" + lot["gua"],
+        *wrap_cjk(lot["element"], inner),
+        "",
+        *[gold("  " + line) for line in lot["poem"]],
+        "",
+        "典故：",
+        *["  " + part for story in lot["story"] for part in wrap_cjk(story, inner - 2)],
+        "",
+        "签解：",
+    ]
+    # two items per line when both fit, otherwise one
+    cells = [f"{key}：{value}" for key, value in lot["items"]]
+    col = (inner - 2) // 2
+    i = 0
+    while i < len(cells):
+        first = cells[i]
+        if width(first) <= col - 2 and i + 1 < len(cells) and width(cells[i + 1]) <= col:
+            body.append("  " + first + " " * (col - width(first)) + cells[i + 1])
+            i += 2
+        else:
+            body += ["  " + part for part in wrap_cjk(first, inner - 2)]
+            i += 1
+    return boxed(body, inner)
+
+
 # ---------- main flow ----------
 
 
@@ -366,6 +413,11 @@ def run(keys, temple, reason):
         if reason:
             say(dim(f"  {reason}，今日改求浅草寺的签。"))
         say(dim("  双手捧起签筒，心中默念所求之事。空格：开始 / 停止；q：退出"))
+    elif temple == TAIWAN:
+        say(red("  ☯  六十甲子签 · 妈祖灵签  ☯"))
+        if reason:
+            say(dim(f"  {reason}，今日改求台湾妈祖庙的六十甲子签。"))
+        say(dim("  心中默念姓名、生辰、住址与所求之事。空格：开始 / 停止；q：退出"))
     else:
         say(red("  ☸  观音灵签  ☸"))
         say(dim("  心中默念姓名、住址与所求之事。空格：开始 / 停止；q：退出"))
@@ -375,8 +427,12 @@ def run(keys, temple, reason):
             # Sensō-ji has no jiaobei: go straight to the hexagonal tube
             lot = draw_lot(keys, lots, " みくじ", "按空格摇动签筒")
             box = render_sensoji(lot)
+        elif temple == TAIWAN:
+            ask_permission(keys, "妈祖")
+            lot = confirm_lot(keys, lots, " 签 筒 ")
+            box = render_taiwan(lot)
         else:
-            ask_permission(keys)
+            ask_permission(keys, "菩萨")
             lot = draw_lot(keys, lots, " 签 筒 ", "按空格开始摇签筒")
             box = render_lot(lot)
         say()
@@ -387,13 +443,13 @@ def run(keys, temple, reason):
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog="qiantong", description="命令行观音灵签：掷筊三圣杯，空格摇签。")
+    parser = argparse.ArgumentParser(prog="qiantong", description="命令行求签：掷筊三圣杯，空格摇签。")
     parser.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument(
         "--temple",
-        choices=("auto", GUANYIN, SENSOJI),
+        choices=("auto", GUANYIN, SENSOJI, TAIWAN),
         default="auto",
-        help="auto：在日本（系统语言或时区）用浅草寺签，否则用观音灵签（默认）",
+        help="auto：按系统语言或时区选择，日本用浅草寺签，台湾用六十甲子签，其他地方用观音灵签（默认）",
     )
     args = parser.parse_args(argv)
 
@@ -403,8 +459,7 @@ def main(argv=None):
 
     reason = None
     if args.temple == "auto":
-        reason = japan.detect()
-        temple = SENSOJI if reason else GUANYIN
+        temple, reason = region.detect()
     else:
         temple = args.temple
 
@@ -414,7 +469,7 @@ def main(argv=None):
             run(keys, temple, reason)
     except (Quit, KeyboardInterrupt):
         say()
-        say(dim("  阿弥陀佛，善哉。"))
+        say(dim("  妈祖保庇。" if temple == TAIWAN else "  阿弥陀佛，善哉。"))
     finally:
         sys.stdout.write("\x1b[?25h")  # show cursor
         sys.stdout.flush()

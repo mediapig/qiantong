@@ -1,10 +1,11 @@
-"""Fortune data: Guanyin lots and Sensō-ji (Asakusa) Kannon lots, 100 each."""
+"""Fortune data: Guanyin lots and Sensō-ji (Asakusa) Kannon lots, 100 each; Taiwan's Sixty Jiazi lots, 60."""
 
 import json
 from importlib import resources
 
 GUANYIN = "guanyin"
 SENSOJI = "sensoji"
+TAIWAN = "taiwan"
 
 
 def load_lots(temple=GUANYIN):

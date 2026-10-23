@@ -1,4 +1,7 @@
-"""Detect whether we are in Japan: Japanese system language or a Japanese time zone."""
+"""Pick the temple from where we seem to be: system language first, then time zone.
+
+Japan → Sensō-ji lots; Taiwan → Sixty Jiazi lots (六十甲子籤); anywhere else → Guanyin lots.
+"""
 
 import os
 import re
@@ -6,7 +9,10 @@ import subprocess
 import sys
 import time
 
+from qiantong.lots import GUANYIN, SENSOJI, TAIWAN
+
 JAPAN_ZONES = ("Asia/Tokyo", "Japan")
+TAIWAN_ZONES = ("Asia/Taipei", "ROC")
 
 
 def _primary_language():
@@ -27,8 +33,11 @@ def _primary_language():
         try:
             import ctypes
 
-            if ctypes.windll.kernel32.GetUserDefaultUILanguage() & 0x3FF == 0x11:  # LANG_JAPANESE
+            langid = ctypes.windll.kernel32.GetUserDefaultUILanguage()
+            if langid & 0x3FF == 0x11:  # LANG_JAPANESE
                 return "ja"
+            if langid == 0x0404:  # Chinese (Traditional, Taiwan)
+                return "zh-TW"
         except (AttributeError, OSError):
             pass
     for var in ("LC_ALL", "LC_MESSAGES", "LANG"):
@@ -51,12 +60,22 @@ def _timezone():
     return time.tzname[0]
 
 
+def _is_taiwanese(lang):
+    """zh-Hant-TW, zh-TW, zh_TW.UTF-8 and the like."""
+    tag = lang.split(".")[0].replace("_", "-").lower()
+    return tag.startswith("zh") and tag.endswith("-tw")
+
+
 def detect():
-    """Return the reason (a Chinese sentence shown to the user) if in Japan, else None."""
+    """Return (temple, reason); reason is a Chinese phrase shown to the user, or None for the default."""
     lang = _primary_language()
     if lang.lower().startswith("ja"):
-        return f"系统语言为日语（{lang}）"
+        return SENSOJI, f"系统语言为日语（{lang}）"
+    if _is_taiwanese(lang):
+        return TAIWAN, f"系统语言为台湾繁体中文（{lang}）"
     tz = _timezone()
     if tz in JAPAN_ZONES or tz.startswith("JST") or "Tokyo" in tz or "東京" in tz:
-        return f"时区为日本（{tz}）"
-    return None
+        return SENSOJI, f"时区为日本（{tz}）"
+    if tz in TAIWAN_ZONES or "Taipei" in tz or "台北" in tz:
+        return TAIWAN, f"时区为台湾（{tz}）"
+    return GUANYIN, None

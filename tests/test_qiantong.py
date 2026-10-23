@@ -2,9 +2,9 @@ from collections import Counter
 
 import pytest
 
-from qiantong import japan, rng
-from qiantong.cli import NO_LINE_START, render_lot, render_sensoji, width
-from qiantong.lots import SENSOJI, load_lots
+from qiantong import region, rng
+from qiantong.cli import NO_LINE_START, render_lot, render_sensoji, render_taiwan, width
+from qiantong.lots import GUANYIN, SENSOJI, TAIWAN, load_lots
 
 
 @pytest.fixture(autouse=True)
@@ -56,22 +56,62 @@ def test_sensoji_box_is_aligned():
             assert not (text and text[0] in NO_LINE_START)
 
 
+def test_taiwan_lots():
+    lots = load_lots(TAIWAN)
+    assert [lot["number"] for lot in lots] == list(range(1, 61))
+    assert lots[0]["name"] == "甲子" and lots[-1]["name"] == "癸亥"
+    for lot in lots:
+        assert len(lot["poem"]) == 4
+        assert all(len(line) == 7 for line in lot["poem"])
+        assert lot["items"] and lot["story"]
+
+
+def test_taiwan_box_is_aligned():
+    for lot in load_lots(TAIWAN):
+        lines = render_taiwan(lot)
+        assert len({width(line) for line in lines}) == 1
+        for line in lines:
+            text = line.strip("│ ")
+            assert not (text and text[0] in NO_LINE_START)
+
+
+def fake_place(monkeypatch, lang, tz):
+    monkeypatch.setattr(region, "_primary_language", lambda: lang)
+    monkeypatch.setenv("TZ", tz)
+
+
 def test_detect_japanese_language(monkeypatch):
-    monkeypatch.setattr(japan, "_primary_language", lambda: "ja-JP")
-    monkeypatch.setattr(japan, "_timezone", lambda: "Asia/Singapore")
-    assert "日语" in japan.detect()
+    fake_place(monkeypatch, "ja-JP", "Asia/Singapore")
+    temple, reason = region.detect()
+    assert temple == SENSOJI and "日语" in reason
 
 
 def test_detect_japan_timezone(monkeypatch):
-    monkeypatch.setattr(japan, "_primary_language", lambda: "zh-Hans-CN")
-    monkeypatch.setenv("TZ", "Asia/Tokyo")
-    assert "Asia/Tokyo" in japan.detect()
+    fake_place(monkeypatch, "zh-Hans-CN", "Asia/Tokyo")
+    temple, reason = region.detect()
+    assert temple == SENSOJI and "Asia/Tokyo" in reason
+
+
+@pytest.mark.parametrize("lang", ["zh-Hant-TW", "zh-TW", "zh_TW.UTF-8"])
+def test_detect_taiwanese_language(monkeypatch, lang):
+    fake_place(monkeypatch, lang, "Asia/Singapore")
+    assert region.detect()[0] == TAIWAN
+
+
+def test_detect_taiwan_timezone(monkeypatch):
+    fake_place(monkeypatch, "en-US", "Asia/Taipei")
+    temple, reason = region.detect()
+    assert temple == TAIWAN and "Asia/Taipei" in reason
+
+
+def test_hong_kong_is_not_taiwan(monkeypatch):
+    fake_place(monkeypatch, "zh-Hant-HK", "Asia/Hong_Kong")
+    assert region.detect() == (GUANYIN, None)
 
 
 def test_detect_elsewhere(monkeypatch):
-    monkeypatch.setattr(japan, "_primary_language", lambda: "en-US")
-    monkeypatch.setenv("TZ", "Asia/Shanghai")
-    assert japan.detect() is None
+    fake_place(monkeypatch, "en-US", "Asia/Shanghai")
+    assert region.detect() == (GUANYIN, None)
 
 
 def test_quantum_bytes_are_used_first(monkeypatch):
