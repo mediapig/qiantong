@@ -214,6 +214,7 @@ def fake_place(monkeypatch, tz, country, lang):
     monkeypatch.setenv("TZ", tz)
     monkeypatch.setattr(region, "_country", lambda: country)
     monkeypatch.setattr(region, "_primary_language", lambda: lang)
+    monkeypatch.setattr(region.location, "current", lambda: None)
 
 
 @pytest.mark.parametrize(
