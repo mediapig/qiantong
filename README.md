@@ -22,6 +22,13 @@ uv tool install git+https://github.com/mediapig/qiantong.git
 
 After installing, run `qiantong` or `chouqian`.
 
+To run the test suite:
+
+```bash
+pip install -e '.[test]'
+pytest
+```
+
 At startup the program selects an animation backend from available resources: low-memory or single-core machines use plain output, ordinary machines use ANSI cursor controls, and machines with at least four cores and four GiB of memory use Rich Live. Rich is installed as part of the main package. Override the choice with `QIANTONG_ANIMATION=plain|ansi|rich`.
 
 For serial consoles, older terminals or log output, use the portable line-by-line backend:

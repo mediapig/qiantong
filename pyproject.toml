@@ -25,6 +25,9 @@ classifiers = [
 ]
 dependencies = ["rich>=13,<14"]
 
+[project.optional-dependencies]
+test = ["pytest>=7,<9"]
+
 [project.urls]
 Homepage = "https://github.com/mediapig/qiantong"
 Source = "https://github.com/mediapig/qiantong"
@@ -46,3 +49,8 @@ qiantong = [
     "_macos/LocationHelper.app/Contents/MacOS/LocationHelper",
     "_macos/LocationHelper.app/Contents/Info.plist",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-ra"
