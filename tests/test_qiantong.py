@@ -2,9 +2,17 @@ from collections import Counter
 
 import pytest
 
-from qiantong import region, rng
-from qiantong.cli import NO_LINE_START, render_lot, render_sensoji, render_taiwan, render_wongtaisin, width
-from qiantong.lots import GUANYIN, SENSOJI, TAIWAN, WONGTAISIN, load_lots
+from qiantong import location, plugins, region, rng
+from qiantong.cli import (
+    NO_LINE_START,
+    RENDERERS,
+    render_lot,
+    render_sensoji,
+    render_taiwan,
+    render_wongtaisin,
+    width,
+)
+from qiantong.lots import GUANYIN, SENSOJI, TAIWAN, WONGTAISIN, load_lots, load_plugin_lots
 
 
 @pytest.fixture(autouse=True)
@@ -89,6 +97,70 @@ def test_wongtaisin_box_is_aligned():
     for lot in load_lots(WONGTAISIN):
         lines = render_wongtaisin(lot)
         assert len({width(line) for line in lines}) == 1
+
+
+def test_every_mounted_plugin_has_data_and_renderer():
+    plugins.discover()
+    for plugin_id in plugins.ids():
+        plugin = plugins.get(plugin_id)
+        lots = load_plugin_lots(plugin)
+        assert lots
+        renderer = plugin.render_lot if callable(plugin.render_lot) else RENDERERS[plugin.renderer]
+        assert renderer(lots[0])
+
+
+@pytest.mark.parametrize(
+    "lang, temple",
+    [
+        ("zh-TW", TAIWAN),
+        ("zh-Hant-TW", TAIWAN),
+        ("zh-HK", WONGTAISIN),
+        ("zh-Hant-HK", WONGTAISIN),
+        ("zh-SG", GUANYIN),
+        ("zh-Hans-SG", GUANYIN),
+        ("zh-MY", GUANYIN),
+        ("zh-Hans-MY", GUANYIN),
+    ],
+)
+def test_language_territory_routes(lang, temple):
+    assert region._language_vote(lang)[0] == temple
+
+
+def test_explicit_headless_location(monkeypatch):
+    monkeypatch.setenv("QIANTONG_LOCATION", "22.30,114.20,50")
+    assert location.current() == location.Location(22.3, 114.2, 50.0)
+
+
+def test_invalid_explicit_location_is_ignored(monkeypatch):
+    monkeypatch.setenv("QIANTONG_LOCATION", "not-a-coordinate")
+    monkeypatch.setattr(location, "_macos_location", lambda: None)
+    monkeypatch.setattr(location, "_gpsd_location", lambda: None)
+    assert location.current() is None
+
+
+def test_gpsd_tpv_location(monkeypatch):
+    class FakeSocket:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            return False
+
+        def settimeout(self, _):
+            pass
+
+        def sendall(self, _):
+            pass
+
+        def recv(self, _):
+            if hasattr(self, "sent"):
+                return b""
+            self.sent = True
+            return b'{"class":"TPV","mode":3,"lat":35.68,"lon":139.76,"epx":4,"epy":3}\n'
+
+    monkeypatch.delenv("QIANTONG_LOCATION", raising=False)
+    monkeypatch.setattr(location.socket, "create_connection", lambda *_args, **_kwargs: FakeSocket())
+    assert location._gpsd_location() == location.Location(35.68, 139.76, 5.0)
 
 
 @pytest.fixture(autouse=True)
