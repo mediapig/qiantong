@@ -6,7 +6,7 @@ The interface and the fortune texts are in Chinese.
 
 ## Installation
 
-Requires Python 3.9+. No third-party dependencies.
+Requires Python 3.9+. Rich is installed automatically as a package dependency.
 
 ```bash
 # Recommended: install as a standalone command
@@ -22,7 +22,7 @@ uv tool install git+https://github.com/mediapig/qiantong.git
 
 After installing, run `qiantong` or `chouqian`.
 
-At startup the program selects an animation backend from available resources: low-memory or single-core machines use plain output, ordinary machines use ANSI cursor controls, and machines with at least four cores and four GiB of memory use Rich Live when the optional Rich package is installed. Override the choice with `QIANTONG_ANIMATION=plain|ansi|rich`.
+At startup the program selects an animation backend from available resources: low-memory or single-core machines use plain output, ordinary machines use ANSI cursor controls, and machines with at least four cores and four GiB of memory use Rich Live. Rich is installed as part of the main package. Override the choice with `QIANTONG_ANIMATION=plain|ansi|rich`.
 
 For serial consoles, older terminals or log output, use the portable line-by-line backend:
 
@@ -30,12 +30,7 @@ For serial consoles, older terminals or log output, use the portable line-by-lin
 QIANTONG_ANIMATION=plain qiantong
 ```
 
-To enable the richer animation on a capable machine:
-
-```bash
-pip install 'qiantong[rich]'
-QIANTONG_ANIMATION=rich qiantong
-```
+On a capable machine, `QIANTONG_ANIMATION=rich qiantong` can be used to force Rich Live explicitly.
 
 ## How to play
 
