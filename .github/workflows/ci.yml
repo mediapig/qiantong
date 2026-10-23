@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, "feature/**"]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-latest, python-version: "3.8"}
+          - {os: ubuntu-latest, python-version: "3.11"}
+          - {os: ubuntu-latest, python-version: "3.14"}
+          - {os: macos-latest, python-version: "3.11"}
+          - {os: windows-latest, python-version: "3.11"}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install test dependencies
+        run: python -m pip install ".[test]"
+      - name: Run tests
+        run: python -m pytest -q
+
+  package:
+    name: Build and install wheel
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Build wheel
+        run: |
+          python -m pip install build
+          python -m build --wheel
+      - name: Install wheel in a clean environment
+        run: |
+          python -m venv /tmp/qiantong-wheel-env
+          /tmp/qiantong-wheel-env/bin/python -m pip install dist/*.whl
+          /tmp/qiantong-wheel-env/bin/python -c "from qiantong.lots import load_lots; assert len(load_lots('guanyin')) == 100"
+      - name: Upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: qiantong-wheel
+          path: dist/*.whl
+
+  macos-helper:
+    name: Build macOS universal2 location helper
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build helper
+        run: sh macos/LocationHelper/build.sh
+      - name: Verify universal binary
+        run: file src/qiantong/_macos/LocationHelper.app/Contents/MacOS/LocationHelper

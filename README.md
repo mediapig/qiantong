@@ -29,6 +29,11 @@ pip install -e '.[test]'
 pytest
 ```
 
+GitHub Actions runs the test matrix on Ubuntu, macOS and Windows, checks the
+wheel in a clean environment, and builds the macOS universal2 location helper.
+Creating a `v*` tag starts the release workflow. Configure a PyPI Trusted
+Publisher for this repository with the `pypi` environment before publishing.
+
 At startup the program selects an animation backend from available resources: low-memory or single-core machines use plain output, ordinary machines use ANSI cursor controls, and machines with at least four cores and four GiB of memory use Rich Live. Rich is installed as part of the main package. Override the choice with `QIANTONG_ANIMATION=plain|ansi|rich`.
 
 For serial consoles, older terminals or log output, use the portable line-by-line backend:
