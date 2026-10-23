@@ -184,8 +184,16 @@ def test_ansi_animation_backend_redraws_frames():
 def test_plain_animation_backend_has_no_cursor_controls():
     output = StringIO()
     backend = animation.create_backend("plain", output)
-    backend.draw(["first", "frame"])
+    backend.draw(["\x1b[1;31mfirst\x1b[0m", "frame"])
     assert output.getvalue() == "first\nframe\n"
+
+
+def test_rich_animation_backend_parses_ansi_colors():
+    output = StringIO()
+    backend = animation.RichAnimationBackend(output)
+    backend.draw(["\x1b[1;31mfirst\x1b[0m"])
+    backend.close()
+    assert "first" in output.getvalue()
 
 
 def test_animation_recommends_plain_on_low_memory(monkeypatch):

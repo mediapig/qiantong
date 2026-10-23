@@ -6,8 +6,12 @@ implement ``AnimationBackend`` without touching randomness or ritual logic.
 """
 
 import os
+import re
 import sys
 from functools import lru_cache
+
+
+ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
 
 class AnimationBackend:
@@ -48,7 +52,8 @@ class PlainAnimationBackend(AnimationBackend):
         self.output = output or sys.stdout
 
     def draw(self, lines):
-        self.output.write("\n".join(lines) + "\n")
+        clean = [ANSI_ESCAPE.sub("", line) for line in lines]
+        self.output.write("\n".join(clean) + "\n")
         self.output.flush()
 
 
@@ -66,7 +71,9 @@ class RichAnimationBackend(AnimationBackend):
         self.live.start()
 
     def draw(self, lines):
-        self.live.update("\n".join(lines), refresh=True)
+        from rich.text import Text
+
+        self.live.update(Text.from_ansi("\n".join(lines)), refresh=True)
 
     def close(self):
         if self.live is not None:
