@@ -181,6 +181,22 @@ def test_plain_animation_backend_has_no_cursor_controls():
     assert output.getvalue() == "first\nframe\n"
 
 
+def test_animation_recommends_plain_on_low_memory(monkeypatch):
+    monkeypatch.setenv("QIANTONG_ANIMATION", "auto")
+    monkeypatch.setattr(animation, "_available_memory", lambda: 512 * 1024 * 1024)
+    monkeypatch.setattr(animation.os, "cpu_count", lambda: 8)
+    animation.recommended_backend.cache_clear()
+    assert animation.recommended_backend() == "plain"
+    animation.recommended_backend.cache_clear()
+
+
+def test_animation_environment_override(monkeypatch):
+    monkeypatch.setenv("QIANTONG_ANIMATION", "plain")
+    animation.recommended_backend.cache_clear()
+    assert animation.recommended_backend() == "plain"
+    animation.recommended_backend.cache_clear()
+
+
 @pytest.fixture(autouse=True)
 def no_ip_lookup(monkeypatch):
     """Tests never look up the public IP."""

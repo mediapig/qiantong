@@ -22,10 +22,19 @@ uv tool install git+https://github.com/mediapig/qiantong.git
 
 After installing, run `qiantong` or `chouqian`.
 
-The default animation uses ANSI cursor controls. For serial consoles, older terminals or log output, use the portable line-by-line backend:
+At startup the program selects an animation backend from available resources: low-memory or single-core machines use plain output, ordinary machines use ANSI cursor controls, and machines with at least four cores and four GiB of memory use Rich Live when the optional Rich package is installed. Override the choice with `QIANTONG_ANIMATION=plain|ansi|rich`.
+
+For serial consoles, older terminals or log output, use the portable line-by-line backend:
 
 ```bash
 QIANTONG_ANIMATION=plain qiantong
+```
+
+To enable the richer animation on a capable machine:
+
+```bash
+pip install 'qiantong[rich]'
+QIANTONG_ANIMATION=rich qiantong
 ```
 
 ## How to play

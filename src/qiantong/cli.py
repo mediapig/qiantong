@@ -107,14 +107,18 @@ def animate(keys, frame_fn, backend=None):
     canvas = backend or create_backend()
     i = 0
     keys.flush()
-    while True:
-        canvas.draw(frame_fn(i))
-        ch = keys.read(FRAME)
-        if ch == " ":
-            return time.perf_counter_ns(), canvas
-        if ch in ("q", "Q", "\x1b"):
-            raise Quit
-        i += 1
+    try:
+        while True:
+            canvas.draw(frame_fn(i))
+            ch = keys.read(FRAME)
+            if ch == " ":
+                return time.perf_counter_ns(), canvas
+            if ch in ("q", "Q", "\x1b"):
+                raise Quit
+            i += 1
+    except BaseException:
+        canvas.close()
+        raise
 
 
 # ---------- jiaobei tossing ----------
@@ -214,6 +218,7 @@ def throw_once(keys, label, prompt):
     canvas.draw(toss_scene(label, [(0, moon(a)), (0, moon(b))], verdict(a, b)))
     time.sleep(0.6)
     canvas.draw(throw_record(label, a, b))
+    canvas.close()
     return a != b
 
 
@@ -273,6 +278,7 @@ def draw_lot(keys, lots, label, prompt):
     for frame in pop_frames(label):
         canvas.draw(frame)
         time.sleep(0.25)
+    canvas.close()
     return lot
 
 
