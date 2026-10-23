@@ -75,43 +75,47 @@ def test_taiwan_box_is_aligned():
             assert not (text and text[0] in NO_LINE_START)
 
 
-def fake_place(monkeypatch, lang, tz):
-    monkeypatch.setattr(region, "_primary_language", lambda: lang)
+@pytest.fixture(autouse=True)
+def no_ip_lookup(monkeypatch):
+    """Tests never look up the public IP."""
+    monkeypatch.setattr(region, "_country", lambda: None)
+
+
+def fake_place(monkeypatch, tz, country, lang):
     monkeypatch.setenv("TZ", tz)
+    monkeypatch.setattr(region, "_country", lambda: country)
+    monkeypatch.setattr(region, "_primary_language", lambda: lang)
 
 
-def test_detect_japanese_language(monkeypatch):
-    fake_place(monkeypatch, "ja-JP", "Asia/Singapore")
-    temple, reason = region.detect()
-    assert temple == SENSOJI and "日语" in reason
+@pytest.mark.parametrize(
+    "tz, country, lang, temple",
+    [
+        ("Asia/Tokyo", "JP", "zh-Hans-CN", SENSOJI),  # mainland tourist in Tokyo
+        ("Asia/Singapore", "SG", "ja-JP", GUANYIN),  # Japanese living in Singapore
+        ("Asia/Taipei", "SG", "zh-Hant-TW", TAIWAN),  # in Taipei behind a Singapore VPN
+        ("Asia/Shanghai", "JP", "ja-JP", SENSOJI),  # Japanese in Shanghai on a Japan VPN
+        ("UTC", "US", "ja-JP", GUANYIN),  # cloud box: tie goes to the IP
+        ("UTC", None, "ja-JP", SENSOJI),  # only the language speaks
+        ("UTC", None, "zh_TW.UTF-8", TAIWAN),
+        ("Asia/Taipei", None, "en-US", TAIWAN),  # the time zone alone
+        ("Asia/Hong_Kong", "HK", "zh-Hant-HK", GUANYIN),  # Hong Kong is not Taiwan
+        ("UTC", None, "en-US", GUANYIN),  # nothing to go on
+    ],
+)
+def test_detect(monkeypatch, tz, country, lang, temple):
+    fake_place(monkeypatch, tz, country, lang)
+    assert region.detect()[0] == temple
 
 
-def test_detect_japan_timezone(monkeypatch):
-    fake_place(monkeypatch, "zh-Hans-CN", "Asia/Tokyo")
-    temple, reason = region.detect()
-    assert temple == SENSOJI and "Asia/Tokyo" in reason
+def test_detect_reason_lists_agreeing_signals(monkeypatch):
+    fake_place(monkeypatch, "Asia/Taipei", "TW", "en-US")
+    assert region.detect() == (TAIWAN, "时区为台湾（Asia/Taipei）、IP 位于台湾")
 
 
-@pytest.mark.parametrize("lang", ["zh-Hant-TW", "zh-TW", "zh_TW.UTF-8"])
-def test_detect_taiwanese_language(monkeypatch, lang):
-    fake_place(monkeypatch, lang, "Asia/Singapore")
-    assert region.detect()[0] == TAIWAN
-
-
-def test_detect_taiwan_timezone(monkeypatch):
-    fake_place(monkeypatch, "en-US", "Asia/Taipei")
-    temple, reason = region.detect()
-    assert temple == TAIWAN and "Asia/Taipei" in reason
-
-
-def test_hong_kong_is_not_taiwan(monkeypatch):
-    fake_place(monkeypatch, "zh-Hant-HK", "Asia/Hong_Kong")
-    assert region.detect() == (GUANYIN, None)
-
-
-def test_detect_elsewhere(monkeypatch):
-    fake_place(monkeypatch, "en-US", "Asia/Shanghai")
-    assert region.detect() == (GUANYIN, None)
+def test_detect_without_ip(monkeypatch):
+    fake_place(monkeypatch, "UTC", "JP", "en-US")
+    assert region.detect(use_ip=False) == (GUANYIN, None)
+    assert region.detect()[0] == SENSOJI
 
 
 def test_quantum_bytes_are_used_first(monkeypatch):

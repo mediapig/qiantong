@@ -449,8 +449,9 @@ def main(argv=None):
         "--temple",
         choices=("auto", GUANYIN, SENSOJI, TAIWAN),
         default="auto",
-        help="auto：按系统语言或时区选择，日本用浅草寺签，台湾用六十甲子签，其他地方用观音灵签（默认）",
+        help="auto：综合时区、IP 和系统语言判断所在地区，日本用浅草寺签，台湾用六十甲子签，其他地方用观音灵签（默认）",
     )
+    parser.add_argument("--no-ip", action="store_true", help="判断地区时不联网查询 IP")
     args = parser.parse_args(argv)
 
     if not sys.stdin.isatty():
@@ -459,7 +460,11 @@ def main(argv=None):
 
     reason = None
     if args.temple == "auto":
-        temple, reason = region.detect()
+        if not args.no_ip:
+            sys.stdout.write(dim("  正在识别所在地区…"))
+            sys.stdout.flush()
+        temple, reason = region.detect(use_ip=not args.no_ip)
+        sys.stdout.write("\r\x1b[2K")
     else:
         temple = args.temple
 

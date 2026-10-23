@@ -38,30 +38,38 @@ After installing, run `qiantong` or `chouqian`.
 2. **Shake the tube (摇签).** Press space to start shaking and space again to stop. A stick pops out. Its number stays hidden until the result is shown.
 3. **Read the lot (解签).** Shows the lot number, its rank, the story behind it, the poem and the interpretation.
 
-## In Taiwan: Sixty Jiazi lots (六十甲子籤)
+## Which lots: where are you?
 
-If the preferred system language is Traditional Chinese (Taiwan) (`zh-Hant-TW`, `zh_TW` and the like) or the time zone is `Asia/Taipei`, the lots switch to the Sixty Jiazi lots used at nearly every Mazu temple in Taiwan. Each lot is named after a pair from the sexagenary cycle, from 甲子 to 癸亥, and shows its hexagram, element, poem, stories and answers for common questions (career, marriage, health, lost items…), in the original Traditional Chinese.
+At startup the program guesses where you are and picks the lots of that place. Three signals vote:
 
-The jiaobei step stays, and follows the Taiwanese custom: after the stick pops out, toss once more to confirm it is the right one. Without a holy toss, the stick goes back into the tube and you shake again.
+| Signal | Votes | Notes |
+| --- | --- | --- |
+| Time zone | 3 | Usually set automatically from your location, so the strongest hint. `UTC` and the like abstain. |
+| IP country | 2 | Looked up via Cloudflare (`https://1.1.1.1/cdn-cgi/trace`, 2-second timeout). A VPN or proxy shows the exit country. Abstains if the lookup fails. |
+| System language | 2 | Says who you are rather than where you are. macOS reads the system preferences, Windows the UI language, other systems `LANG` and related variables. Languages unrelated to a region, such as English, abstain. |
 
-## In Japan: Sensō-ji fortunes
+Each signal votes for Japan (Sensō-ji), Taiwan (Sixty Jiazi lots) or anywhere else (Guanyin lots). The place with the most votes wins; a tie goes to the signal ranked higher in the table. So the time zone decides as soon as one other signal agrees with it, while the IP and the language together outvote it. For example, a mainland visitor in Tokyo gets Sensō-ji lots, and a Japanese person living in Singapore gets Guanyin lots.
 
-If either of the following is detected, the lots switch to the 100 Kannon fortunes of Sensō-ji in Asakusa, Tokyo (ranks 大吉 / 吉 / 半吉 / 小吉 / 末小吉 / 末吉 / 凶), and the jiaobei step is skipped:
-
-- the preferred system language is Japanese (macOS reads the system preferences, Windows reads the UI language, other systems read `LANG` and related variables);
-- the time zone is Japan (`Asia/Tokyo`, `Japan`, JST).
-
-You can also choose explicitly:
+When the result is not Guanyin, the program tells you which signals decided it. A command-line tool has no access to GPS, so precise location is not used. Pass `--no-ip` to skip the IP lookup, or choose the lots explicitly:
 
 ```bash
 qiantong --temple sensoji   # Sensō-ji
 qiantong --temple taiwan    # Sixty Jiazi lots
 qiantong --temple guanyin   # Guanyin
+qiantong --no-ip            # decide from the time zone and language only
 TZ=Asia/Tokyo qiantong      # pretend to be in Japan
 TZ=Asia/Taipei qiantong     # pretend to be in Taiwan
 ```
 
-The system language is checked before the time zone. A command-line tool has no access to GPS, so location is not used.
+## In Taiwan: Sixty Jiazi lots (六十甲子籤)
+
+The Sixty Jiazi lots are used at nearly every Mazu temple in Taiwan. Each lot is named after a pair from the sexagenary cycle, from 甲子 to 癸亥, and shows its hexagram, element, poem, stories and answers for common questions (career, marriage, health, lost items…), in the original Traditional Chinese.
+
+The jiaobei step stays, and follows the Taiwanese custom: after the stick pops out, toss once more to confirm it is the right one. Without a holy toss, the stick goes back into the tube and you shake again.
+
+## In Japan: Sensō-ji fortunes
+
+The 100 Kannon fortunes of Sensō-ji in Asakusa, Tokyo (ranks 大吉 / 吉 / 半吉 / 小吉 / 末小吉 / 末吉 / 凶). As at the temple, there is no jiaobei step: you go straight to the lot tube.
 
 ## Randomness
 
