@@ -1,0 +1,8 @@
+[
+  {"number":1,"name":"เริ่มต้นใหม่","level":"ดี","poem":["แสงทองส่องทางไกล","ก้าวไปด้วยใจมั่น","ความเพียรนำพาฝัน","สำเร็จได้ด้วยตน"],"story":"A new beginning opens before you.","interpretation":"Begin with one clear step and keep your promise to yourself."},
+  {"number":2,"name":"อดทน","level":"ปานกลาง","poem":["ลมแรงพัดผ่านฟ้า","เมฆมาคลายแล้วไป","อย่าเร่งร้อนเกินใจ","เวลาจะช่วยเจ้า"],"story":"The present delay is temporary.","interpretation":"Stay steady and let the right timing develop."},
+  {"number":3,"name":"มิตรแท้","level":"ดีมาก","poem":["เพื่อนดีมีค่าล้ำ","ยามยากช่วยประคอง","ร่วมแรงสร้างครรลอง","ทางไกลก็ใกล้พลัน"],"story":"A trusted companion brings strength.","interpretation":"Ask for help and share responsibility with reliable people."},
+  {"number":4,"name":"ระวัง","level":"ควรระวัง","poem":["ทางลื่นอย่าก้าวพลาด","คำหวานอาจซ่อนภัย","ตรองก่อนจึงเดินไป","รักษาทรัพย์และใจตน"],"story":"Not every attractive offer is safe.","interpretation":"Check the facts, protect your boundaries and avoid haste."},
+  {"number":5,"name":"สมดุล","level":"ดี","poem":["งานหนักพักบ้างเถิด","ใจเกิดเมื่อมีไฟ","แบ่งเวลาให้พอดี","สุขดีจึงยั่งยืน"],"story":"Success needs a sustainable rhythm.","interpretation":"Balance effort with rest so your progress can last."},
+  {"number":6,"name":"สมหวัง","level":"ดีมาก","poem":["ดาวเด่นเห็นทางเปิด","สิ่งหวังใกล้เป็นจริง","ทำดีอย่าหยุดนิ่ง","ผลลัพธ์จะตามมา"],"story":"Your preparation is meeting a favorable moment.","interpretation":"Act confidently while keeping gratitude and discipline."}
+]
