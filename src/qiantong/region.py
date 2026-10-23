@@ -14,7 +14,6 @@ import re
 import subprocess
 import sys
 import time
-import urllib.request
 
 from qiantong import location
 from qiantong.plugins import get
@@ -33,9 +32,6 @@ JAPAN_ZONES = ("Asia/Tokyo", "Japan")
 TAIWAN_ZONES = ("Asia/Taipei", "ROC")
 HONG_KONG_ZONES = ("Asia/Hong_Kong", "Hongkong", "Hong_Kong")
 NEUTRAL_ZONES = ("Etc/", "UTC", "GMT", "Universal", "Zulu")
-
-IP_URL = "https://1.1.1.1/cdn-cgi/trace"  # Cloudflare; the reply has a line like loc=TW
-IP_TIMEOUT = 2  # seconds
 
 COUNTRY_TEMPLE = {"JP": SENSOJI, "TW": TAIWAN, "HK": WONGTAISIN}
 COUNTRY_NAME = {"JP": "日本", "TW": "台湾", "HK": "香港"}
@@ -109,14 +105,8 @@ def _timezone():
 
 
 def _country():
-    """Two-letter country code of our public IP, or None if the lookup fails."""
-    try:
-        with urllib.request.urlopen(IP_URL, timeout=IP_TIMEOUT) as resp:
-            text = resp.read().decode("ascii", "ignore")
-    except Exception:  # offline, timeout, blocked: this signal just abstains
-        return None
-    match = re.search(r"^loc=([A-Z]{2})$", text, re.M)
-    return match[1] if match else None
+    """Return no IP signal; routing must not contact an external service."""
+    return None
 
 
 def _zone_vote(tz):

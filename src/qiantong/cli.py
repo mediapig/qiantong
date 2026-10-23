@@ -467,15 +467,9 @@ RENDERERS = {
 
 
 def connect_entropy():
-    """Prefetch quantum random bytes at startup and tell the user which source is in use."""
-    sys.stdout.write(dim("  正在连接量子随机数服务…"))
-    sys.stdout.flush()
+    """Report the local random source without making a network request."""
     label = rng.warm_up()
-    sys.stdout.write("\r\x1b[2K")
-    if label == rng.QUANTUM:
-        say(dim(f"  随机源：{label}"))
-    else:
-        say(dim(f"  量子随机数服务连不上，改用{label}"))
+    say(dim(f"  随机源：{label}"))
 
 
 def run(keys, temple, reason):

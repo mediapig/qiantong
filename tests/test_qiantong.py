@@ -256,19 +256,11 @@ def test_detect_without_ip(monkeypatch):
     assert region.detect()[0] == SENSOJI
 
 
-def test_quantum_bytes_are_used_first(monkeypatch):
-    calls = []
-
-    def fake_fetch(length):
-        calls.append(length)
-        return bytes(range(256)) * (length // 256)
-
-    monkeypatch.setattr(rng, "source", rng.EntropySource(fetch=fake_fetch))
-    assert rng.warm_up() == rng.QUANTUM
+def test_local_randomness_is_default(monkeypatch):
+    monkeypatch.setattr(rng, "source", rng.EntropySource(fetch=None))
+    assert rng.warm_up() == rng.LOCAL
     rng.randbelow(100)
-    assert rng.last_source == rng.QUANTUM
-    assert len(rng.source.pool) == rng.POOL_SIZE - rng.CHUNK
-    assert calls == [rng.POOL_SIZE]
+    assert rng.last_source == rng.LOCAL
 
 
 def test_falls_back_when_quantum_service_fails(monkeypatch):
@@ -282,4 +274,4 @@ def test_falls_back_when_quantum_service_fails(monkeypatch):
     assert rng.warm_up() == rng.LOCAL
     assert 0 <= rng.randbelow(100) < 100
     assert rng.last_source == rng.LOCAL
-    assert calls == [rng.POOL_SIZE]  # no repeated network attempts after a failure
+    assert calls == [1024]  # injected providers still fail closed after one attempt

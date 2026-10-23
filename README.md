@@ -62,13 +62,12 @@ On a capable machine, `QIANTONG_ANIMATION=rich qiantong` can be used to force Ri
 
 ## Which lots: where are you?
 
-At startup the program guesses where you are and shows the lot choices available for that region. Four signals vote:
+At startup the program guesses where you are and shows the lot choices available for that region. Three signals vote:
 
 | Signal | Votes | Notes |
 | --- | --- | --- |
 | GPS | 5 | Uses the macOS Core Location helper, an explicit `QIANTONG_LOCATION`, or a local gpsd socket. Abstains when unavailable or too inaccurate. |
 | Time zone | 3 | Usually set automatically from your location, so the strongest hint. `UTC` and the like abstain. |
-| IP country | 2 | Looked up via Cloudflare (`https://1.1.1.1/cdn-cgi/trace`, 2-second timeout). A VPN or proxy shows the exit country. Abstains if the lookup fails. |
 | System language | 2 | Says who you are rather than where you are. `zh-TW` selects Taiwan Traditional Chinese, `zh-HK`/`zh-MO` selects Hong Kong Traditional Chinese, and `zh-SG`/`zh-MY` stays on Simplified Chinese. macOS reads the system preferences, Windows the UI language, other systems `LANG` and related variables. Languages unrelated to a region, such as English, abstain. |
 
 Each signal votes for Japan (Sensō-ji), Taiwan (Sixty Jiazi lots), Hong Kong (Wong Tai Sin lots) or anywhere else (Guanyin lots). The place with the most votes wins; a tie goes to the signal ranked higher in the table. After the region is selected, the first page lets you choose its available thematic pack, such as Guanyin, Guandi, Yue Lao, Caishen or Wenchang, before the ritual starts.
@@ -81,7 +80,7 @@ Plugins are discovered at startup through the Python entry-point group `qiantong
 
 On macOS, the universal2 Core Location helper is included in macOS builds of the package, so the first `qiantong` run asks for permission. If permission is denied or the helper is unavailable, the router falls back to time zone, IP and language. To build the helper locally, run `sh macos/LocationHelper/build.sh` on a Mac with Xcode command-line tools.
 
-When the result is not Guanyin, the program tells you which signals decided it. Location is best-effort: a missing permission, GPS receiver or daemon never blocks a draw. On routers and NAS systems, set `QIANTONG_LOCATION=latitude,longitude[,accuracy]` or run gpsd with its standard local JSON socket. Pass `--no-ip` to skip the IP lookup, or choose the lots explicitly:
+When the result is not Guanyin, the program tells you which signals decided it. Location is best-effort: a missing permission, GPS receiver or daemon never blocks a draw. On routers and NAS systems, set `QIANTONG_LOCATION=latitude,longitude[,accuracy]` or run gpsd with its standard local JSON socket. Choose the lots explicitly with `--temple`:
 
 ```bash
 qiantong --temple sensoji   # Sensō-ji
@@ -120,9 +119,7 @@ The 100 traditional Wong Tai Sin lots associated with Sik Sik Yuen in Hong Kong.
 
 Every result is decided at the moment you press space to stop. The animation is only for show and has no effect on the outcome.
 
-**Quantum random numbers by default.** At startup the program fetches 1024 bytes from the [quantum random number service of the OTH Regensburg Laboratory for Digitalisation](https://lfdr.de/QRNG/) into a pool, and fetches more when the pool runs out. The bytes are produced by ID Quantique's Quantis quantum random number hardware (a PCIe card), whose randomness comes from quantum physical processes.
-
-**Local fallback.** If the service is unreachable, times out (3 seconds) or misbehaves, the program falls back to Python's standard `secrets` module, i.e. the operating system's cryptographic random number generator. After one failure it stays offline for the rest of the run so that draws never stall. The startup line tells you which source is in use.
+**Local cryptographic randomness.** Every draw uses Python's standard `secrets` module, backed by the operating system's cryptographic random number generator. The program does not contact a random-number service, so draws work offline and do not depend on a third-party endpoint.
 
 Each draw takes 32 random bytes, appends the nanosecond timestamp of your key press, hashes them with SHA-256, and maps the result onto the target range by rejection sampling. Every lot therefore has a probability of exactly 1/100, and each block is yin or yang with probability exactly 1/2.
 
