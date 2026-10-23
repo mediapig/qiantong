@@ -3,8 +3,8 @@ from collections import Counter
 import pytest
 
 from qiantong import region, rng
-from qiantong.cli import NO_LINE_START, render_lot, render_sensoji, render_taiwan, width
-from qiantong.lots import GUANYIN, SENSOJI, TAIWAN, load_lots
+from qiantong.cli import NO_LINE_START, render_lot, render_sensoji, render_taiwan, render_wongtaisin, width
+from qiantong.lots import GUANYIN, SENSOJI, TAIWAN, WONGTAISIN, load_lots
 
 
 @pytest.fixture(autouse=True)
@@ -75,6 +75,22 @@ def test_taiwan_box_is_aligned():
             assert not (text and text[0] in NO_LINE_START)
 
 
+def test_wongtaisin_lots():
+    lots = load_lots(WONGTAISIN)
+    assert [lot["number"] for lot in lots] == list(range(1, 101))
+    levels = {"上上签", "上吉签", "中吉签", "中平签", "下下签"}
+    for lot in lots:
+        assert len(lot["poem"]) == 4
+        assert all(line for line in lot["poem"])
+        assert lot["name"] and lot["level"] in levels
+
+
+def test_wongtaisin_box_is_aligned():
+    for lot in load_lots(WONGTAISIN):
+        lines = render_wongtaisin(lot)
+        assert len({width(line) for line in lines}) == 1
+
+
 @pytest.fixture(autouse=True)
 def no_ip_lookup(monkeypatch):
     """Tests never look up the public IP."""
@@ -98,7 +114,7 @@ def fake_place(monkeypatch, tz, country, lang):
         ("UTC", None, "ja-JP", SENSOJI),  # only the language speaks
         ("UTC", None, "zh_TW.UTF-8", TAIWAN),
         ("Asia/Taipei", None, "en-US", TAIWAN),  # the time zone alone
-        ("Asia/Hong_Kong", "HK", "zh-Hant-HK", GUANYIN),  # Hong Kong is not Taiwan
+        ("Asia/Hong_Kong", "HK", "zh-Hant-HK", WONGTAISIN),
         ("UTC", None, "en-US", GUANYIN),  # nothing to go on
     ],
 )

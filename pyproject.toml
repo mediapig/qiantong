@@ -38,4 +38,8 @@ chouqian = "qiantong.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-qiantong = ["data/*.json"]
+qiantong = [
+    "data/*.json",
+    "_macos/LocationHelper.app/Contents/MacOS/LocationHelper",
+    "_macos/LocationHelper.app/Contents/Info.plist",
+]

@@ -1,0 +1,8 @@
+[
+  {"number":1,"name":"Khởi đầu","level":"Tốt","poem":["Ánh bình minh mở lối","bước nhỏ thắng ngại ngần","gieo lòng cùng kiên nhẫn","ngày mai sẽ nở hoa"],"story":"A new path is ready to begin.","interpretation":"Choose one practical action and let consistency build the result."},
+  {"number":2,"name":"Kiên nhẫn","level":"Trung bình","poem":["Nước chảy qua ghềnh đá","rồi cũng đến nơi xa","đừng vội theo lời gọi","thời cơ sẽ nở hoa"],"story":"The answer needs more time.","interpretation":"Do not force a decision before the facts are clear."},
+  {"number":3,"name":"Gặp gỡ","level":"Rất tốt","poem":["Hai tay cùng dựng cầu","hai lòng kết thành nhà","lời ngay thêm sức mạnh","đường xa hóa gần thôi"],"story":"Good company improves the journey.","interpretation":"Speak honestly and accept support from people you trust."},
+  {"number":4,"name":"Cẩn trọng","level":"Nên đề phòng","poem":["Sương che mờ lối trước","lời ngọt giấu điều chi","hãy nhìn từng dấu nhỏ","giữ vững lý trí mình"],"story":"Appearances may hide a risk.","interpretation":"Verify promises and preserve your resources before proceeding."},
+  {"number":5,"name":"Đổi thay","level":"Tốt","poem":["Lá theo chiều gió mới","rễ vẫn giữ lòng son","học từ ngày đã cũ","mở lối đến ngày mai"],"story":"A change of direction can be useful.","interpretation":"Keep your principles while adapting your method."},
+  {"number":6,"name":"Kết quả","level":"Rất tốt","poem":["Sau đêm dài tĩnh lặng","bình minh gọi tên người","công phu nay kết trái","hãy bước tiếp vui tươi"],"story":"Your effort is beginning to show.","interpretation":"Receive the result and prepare the next stage with care."}
+]

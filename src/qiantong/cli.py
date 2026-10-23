@@ -12,7 +12,8 @@ import unicodedata
 
 from qiantong import __version__, region, rng
 from qiantong.keys import KeyReader
-from qiantong.lots import GUANYIN, SENSOJI, TAIWAN, load_lots
+from qiantong.lots import load_plugin_lots
+from qiantong.plugins import discover, get as get_plugin, ids as plugin_ids
 
 FRAME = 0.08  # seconds per animation frame
 THROWS = 3  # consecutive holy tosses required
@@ -291,16 +292,16 @@ def draw_lot(keys, lots, label, prompt):
     return lot
 
 
-def confirm_lot(keys, lots, label):
+def confirm_lot(keys, lots, label, deity):
     """Taiwanese custom: one more holy toss confirms the drawn stick; otherwise put it back and shake again."""
     prompt = "按空格开始摇签筒"
     while True:
         lot = draw_lot(keys, lots, label, prompt)
         say()
-        say(gold("【掷筊确认】") + " 请示是否为这支签，得一圣杯方可")
+        say(gold("【掷筊确认】") + f" 请示{deity}是否为这支签，得一圣杯方可")
         if throw_once(keys, "确　认", "按空格掷筊确认"):
             return lot
-        say(dim("  妈祖未允此签，把签放回签筒，重新摇签。"))
+        say(dim(f"  {deity}未允此签，把签放回签筒，重新摇签。"))
         prompt = "按空格重新摇签筒"
 
 
@@ -308,6 +309,7 @@ def confirm_lot(keys, lots, label):
 
 LEVEL_COLOR = {
     "上签": red, "中签": gold, "下签": dim,
+    "上上签": red, "上吉签": red, "中吉签": gold, "中平签": gold, "下下签": dim,
     "大吉": red, "吉": red, "半吉": gold, "小吉": gold, "末小吉": gold, "末吉": gold, "凶": dim,
 }
 INNER = 36  # inner width of the lot box
@@ -390,6 +392,65 @@ def render_taiwan(lot, inner=INNER):
     return boxed(body, inner)
 
 
+def render_wongtaisin(lot, inner=INNER):
+    level = LEVEL_COLOR.get(lot["level"], str)(lot["level"])
+    body = [
+        red(f"黄大仙灵签 · 第{lot['number']}签") + "  " + level,
+        "签题：" + lot["name"],
+        "",
+        *[gold("  " + line) for line in lot["poem"]],
+        "",
+        "典故：" + lot["name"],
+        "",
+        *[dim("  " + part) for part in wrap_cjk("古签诗与历史签题来自黄大仙灵签传统资料，仅供文化体验。", inner - 2)],
+    ]
+    return boxed(body, inner)
+
+
+def render_generic(lot, inner=INNER, title="灵签", labels=("签题：", "典故：", "解曰：")):
+    """Render the common plugin contract used by independently mounted packs."""
+    level = LEVEL_COLOR.get(lot.get("level", ""), str)(lot.get("level", ""))
+    title = lot.get("title", title)
+    body = [red(f"{title} · {lot['number']}") + "  " + level]
+    if lot.get("name"):
+        body.append(labels[0] + lot["name"])
+    body += ["", *[gold("  " + line) for line in lot.get("poem", [])], ""]
+    if lot.get("story"):
+        body += [labels[1], *["  " + part for part in wrap_cjk(lot["story"], inner - 2)], ""]
+    if lot.get("interpretation"):
+        body += [labels[2], *["  " + part for part in wrap_cjk(lot["interpretation"], inner - 2)]]
+    return boxed(body, inner)
+
+
+def render_thai(lot, inner=INNER):
+    return render_generic(lot, inner, "Thai Siam Si", ("ชื่อ: ", "เรื่อง: ", "คำแนะนำ: "))
+
+
+def render_vietnamese(lot, inner=INNER):
+    return render_generic(lot, inner, "Xin Xăm", ("Tên: ", "Ý nghĩa: ", "Lời khuyên: "))
+
+
+def render_oracle(lot, inner=INNER):
+    return render_generic(lot, inner, "English Oracle", ("Title: ", "Meaning:", "Reading:"))
+
+
+def render_inari(lot, inner=INNER):
+    return render_generic(lot, inner, "稲荷神社 おみくじ", ("題：", "由来：", "お告げ："))
+
+
+RENDERERS = {
+    "guanyin": render_lot,
+    "sensoji": render_sensoji,
+    "taiwan": render_taiwan,
+    "wongtaisin": render_wongtaisin,
+    "generic": render_generic,
+    "thai": render_thai,
+    "vietnamese": render_vietnamese,
+    "oracle": render_oracle,
+    "inari": render_inari,
+}
+
+
 # ---------- main flow ----------
 
 
@@ -406,35 +467,25 @@ def connect_entropy():
 
 
 def run(keys, temple, reason):
-    lots = load_lots(temple)
+    plugin = get_plugin(temple)
+    lots = load_plugin_lots(plugin)
     say()
-    if temple == SENSOJI:
-        say(red("  ⛩  浅草寺 观音百签 · おみくじ  ⛩"))
-        if reason:
-            say(dim(f"  {reason}，今日改求浅草寺的签。"))
-        say(dim("  双手捧起签筒，心中默念所求之事。空格：开始 / 停止；q：退出"))
-    elif temple == TAIWAN:
-        say(red("  ☯  六十甲子签 · 妈祖灵签  ☯"))
-        if reason:
-            say(dim(f"  {reason}，今日改求台湾妈祖庙的六十甲子签。"))
-        say(dim("  心中默念姓名、生辰、住址与所求之事。空格：开始 / 停止；q：退出"))
-    else:
-        say(red("  ☸  观音灵签  ☸"))
-        say(dim("  心中默念姓名、住址与所求之事。空格：开始 / 停止；q：退出"))
+    say(red(plugin.title))
+    if reason:
+        say(dim(f"  {reason}，今日求{plugin.title.strip(' ⛩☯🏮☸')}。"))
+    say(dim("  " + plugin.intro))
     connect_entropy()
     while True:
-        if temple == SENSOJI:
-            # Sensō-ji has no jiaobei: go straight to the hexagonal tube
-            lot = draw_lot(keys, lots, " みくじ", "按空格摇动签筒")
-            box = render_sensoji(lot)
-        elif temple == TAIWAN:
+        if plugin.ritual == "direct":
+            lot = draw_lot(keys, lots, plugin.label, plugin.draw_prompt)
+        elif plugin.ritual == "confirm":
             ask_permission(keys, "妈祖")
-            lot = confirm_lot(keys, lots, " 签 筒 ")
-            box = render_taiwan(lot)
+            lot = confirm_lot(keys, lots, plugin.label, plugin.deity)
         else:
-            ask_permission(keys, "菩萨")
-            lot = draw_lot(keys, lots, " 签 筒 ", "按空格开始摇签筒")
-            box = render_lot(lot)
+            ask_permission(keys, plugin.deity)
+            lot = draw_lot(keys, lots, plugin.label, plugin.draw_prompt)
+        renderer = plugin.render_lot if callable(plugin.render_lot) else RENDERERS[plugin.renderer]
+        box = renderer(lot)
         say()
         for line in box:
             say("  " + line)
@@ -443,13 +494,14 @@ def run(keys, temple, reason):
 
 
 def main(argv=None):
+    discover()
     parser = argparse.ArgumentParser(prog="qiantong", description="命令行求签：掷筊三圣杯，空格摇签。")
     parser.add_argument("-V", "--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument(
         "--temple",
-        choices=("auto", GUANYIN, SENSOJI, TAIWAN),
+        choices=("auto",) + plugin_ids(),
         default="auto",
-        help="auto：综合时区、IP 和系统语言判断所在地区，日本用浅草寺签，台湾用六十甲子签，其他地方用观音灵签（默认）",
+        help="auto：综合时区、IP 和系统语言判断所在地区，日本用浅草寺签，台湾用六十甲子签，香港用黄大仙签，其他地方用观音灵签（默认）",
     )
     parser.add_argument("--no-ip", action="store_true", help="判断地区时不联网查询 IP")
     args = parser.parse_args(argv)
@@ -474,7 +526,7 @@ def main(argv=None):
             run(keys, temple, reason)
     except (Quit, KeyboardInterrupt):
         say()
-        say(dim("  妈祖保庇。" if temple == TAIWAN else "  阿弥陀佛，善哉。"))
+        say(dim("  " + get_plugin(temple).goodbye))
     finally:
         sys.stdout.write("\x1b[?25h")  # show cursor
         sys.stdout.flush()
