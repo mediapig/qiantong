@@ -50,7 +50,7 @@ On a capable machine, `QIANTONG_ANIMATION=rich qiantong` can be used to force Ri
 
 ## Which lots: where are you?
 
-At startup the program guesses where you are and picks the lots of that place. Four signals vote:
+At startup the program guesses where you are and shows the lot choices available for that region. Four signals vote:
 
 | Signal | Votes | Notes |
 | --- | --- | --- |
@@ -59,7 +59,7 @@ At startup the program guesses where you are and picks the lots of that place. F
 | IP country | 2 | Looked up via Cloudflare (`https://1.1.1.1/cdn-cgi/trace`, 2-second timeout). A VPN or proxy shows the exit country. Abstains if the lookup fails. |
 | System language | 2 | Says who you are rather than where you are. `zh-TW` selects Taiwan Traditional Chinese, `zh-HK`/`zh-MO` selects Hong Kong Traditional Chinese, and `zh-SG`/`zh-MY` stays on Simplified Chinese. macOS reads the system preferences, Windows the UI language, other systems `LANG` and related variables. Languages unrelated to a region, such as English, abstain. |
 
-Each signal votes for Japan (Sensō-ji), Taiwan (Sixty Jiazi lots), Hong Kong (Wong Tai Sin lots) or anywhere else (Guanyin lots). The place with the most votes wins; a tie goes to the signal ranked higher in the table. So the time zone decides as soon as one other signal agrees with it, while the IP and the language together outvote it.
+Each signal votes for Japan (Sensō-ji), Taiwan (Sixty Jiazi lots), Hong Kong (Wong Tai Sin lots) or anywhere else (Guanyin lots). The place with the most votes wins; a tie goes to the signal ranked higher in the table. After the region is selected, the first page lets you choose its available thematic pack, such as Guanyin, Guandi, Yue Lao, Caishen or Wenchang, before the ritual starts.
 
 The random engine is independent of the region router. Each fortune system is mounted as a plugin that supplies its data and ritual/presentation behavior. This keeps the core usable on desktops, servers, NAS systems and command-line routers.
 

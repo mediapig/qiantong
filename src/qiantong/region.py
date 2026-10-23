@@ -23,6 +23,11 @@ GUANYIN = get("guanyin").id
 SENSOJI = get("sensoji").id
 TAIWAN = get("taiwan").id
 WONGTAISIN = get("wongtaisin").id
+YUELAO = get("yuelao").id
+GUANDI = get("guandi").id
+CAISHEN = get("caishen").id
+WENCHANG = get("wenchang").id
+INARI = get("inari").id
 
 JAPAN_ZONES = ("Asia/Tokyo", "Japan")
 TAIWAN_ZONES = ("Asia/Taipei", "ROC")
@@ -40,6 +45,20 @@ TIME_ZONE = (3, 3)
 IP = (2, 2)
 LANGUAGE = (2, 1)
 GPS = (5, 4)
+
+# Region detection chooses the local tradition first. The user can then pick
+# a thematic pack offered in that region before the ritual begins.
+REGION_OPTIONS = {
+    GUANYIN: (GUANYIN, GUANDI, YUELAO, CAISHEN, WENCHANG),
+    TAIWAN: (TAIWAN, YUELAO, CAISHEN, WENCHANG),
+    WONGTAISIN: (WONGTAISIN, YUELAO, CAISHEN),
+    SENSOJI: (SENSOJI, INARI),
+}
+
+
+def options_for(temple):
+    """Return the interactive lot choices for a detected regional tradition."""
+    return REGION_OPTIONS.get(temple, (temple,))
 
 
 def _primary_language():

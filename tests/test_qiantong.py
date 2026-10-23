@@ -127,6 +127,13 @@ def test_language_territory_routes(lang, temple):
     assert region._language_vote(lang)[0] == temple
 
 
+def test_regional_lot_choices():
+    assert region.options_for(TAIWAN)[0] == TAIWAN
+    assert GUANYIN in region.options_for(GUANYIN)
+    assert len(region.options_for(GUANYIN)) > 1
+    assert region.options_for("unknown") == ("unknown",)
+
+
 def test_explicit_headless_location(monkeypatch):
     monkeypatch.setenv("QIANTONG_LOCATION", "22.30,114.20,50")
     assert location.current() == location.Location(22.3, 114.2, 50.0)

@@ -102,6 +102,28 @@ def wait_space(keys, prompt):
             raise Quit
 
 
+def choose_temple(keys, temple, reason=None):
+    """Show a regional lot menu before starting the selected ritual."""
+    options = region.options_for(temple)
+    if len(options) == 1:
+        return temple
+    say()
+    say(red("【请选择签种】"))
+    if reason:
+        say(dim("  " + reason))
+    say(dim("  按数字选择，q 退出"))
+    for number, option in enumerate(options, 1):
+        say(f"  {number}. {get_plugin(option).title.strip()}")
+    while True:
+        key = keys.read()
+        if key in ("q", "Q", "\x1b"):
+            raise Quit
+        if key and key.isdigit():
+            index = int(key) - 1
+            if 0 <= index < len(options):
+                return options[index]
+
+
 def animate(keys, frame_fn, backend=None):
     """Draw frames through an animation backend until space is pressed."""
     canvas = backend or create_backend()
@@ -513,6 +535,8 @@ def main(argv=None):
     sys.stdout.write("\x1b[?25l")  # hide cursor
     try:
         with KeyReader() as keys:
+            if args.temple == "auto":
+                temple = choose_temple(keys, temple, reason)
             run(keys, temple, reason)
     except (Quit, KeyboardInterrupt):
         say()
