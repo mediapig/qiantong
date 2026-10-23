@@ -6,7 +6,7 @@ The interface and the fortune texts are in Chinese.
 
 ## Installation
 
-Requires Python 3.9+. Rich is installed automatically as a package dependency.
+Requires Python 3.8+. Rich is installed automatically as a package dependency.
 
 ```bash
 # Recommended: install as a standalone command
