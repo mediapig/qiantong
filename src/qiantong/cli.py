@@ -467,7 +467,7 @@ RENDERERS = {
 
 
 def connect_entropy():
-    """Report the local random source without making a network request."""
+    """Prefetch randomness and report the source without exposing its endpoint."""
     label = rng.warm_up()
     say(dim(f"  随机源：{label}"))
 

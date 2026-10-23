@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qiantong"
-version = "0.1.4"
+version = "0.1.5"
 description = "Temple fortune sticks in the terminal: Guanyin lots (观音灵签), Taiwan's Sixty Jiazi lots, Sensō-ji omikuji, with jiaobei tossing and quantum randomness"
 readme = "README.md"
 requires-python = ">=3.8"

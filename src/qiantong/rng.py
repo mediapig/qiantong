@@ -1,8 +1,4 @@
-"""Cryptographic randomness for the draw engine.
-
-The default source is Python's standard ``secrets`` module, backed by the
-operating system CSPRNG. An ``EntropySource`` can still receive an injected
-byte provider for tests or an application-owned hardware source.
+"""Randomness that combines a remote quantum source with a local fallback.
 
 Each draw takes 32 bytes, appends the nanosecond timestamp of the user's key press,
 hashes them with SHA-256, and maps the result onto [0, n) by rejection sampling so that
@@ -10,19 +6,33 @@ every outcome has exactly the same probability.
 """
 
 import hashlib
+import json
 import secrets
 import time
+import urllib.request
 
+QRNG_URL = "https://lfdr.de/qrng_api/qrng?length={length}&format=HEX"
+POOL_SIZE = 1024  # bytes requested from the service per fetch
+TIMEOUT = 3
 CHUNK = 32  # bytes consumed per draw
-POOL_SIZE = 1024  # bytes requested from an injected provider
 
+QUANTUM = "量子随机数"
 LOCAL = "本机密码学随机数（Python secrets）"
+
+
+def fetch_quantum(length):
+    """Request quantum bytes; callers can replace this provider in tests."""
+    with urllib.request.urlopen(QRNG_URL.format(length=length), timeout=TIMEOUT) as resp:
+        data = bytes.fromhex(json.loads(resp.read())["qrn"])
+    if len(data) != length:
+        raise ValueError(f"expected {length} quantum random bytes, got {len(data)}")
+    return data
 
 
 class EntropySource:
     """Hand out quantum random bytes when possible, otherwise fall back to `secrets`."""
 
-    def __init__(self, fetch=None):
+    def __init__(self, fetch=fetch_quantum):
         self.fetch = fetch
         self.pool = bytearray()
         self.offline = fetch is None  # after one failure stay offline, so draws do not stall for seconds
@@ -48,13 +58,14 @@ class EntropySource:
         return secrets.token_bytes(n), LOCAL
 
 
-source = EntropySource(fetch=None)
+source = EntropySource()
 last_source = None  # source of the most recent draw, for display
 
 
 def warm_up():
-    """Return the local source label without making a network request."""
-    return LOCAL
+    """Prefetch a batch of quantum bytes and return the source label."""
+    source.refill()
+    return QUANTUM if source.pool else LOCAL
 
 
 def randbelow(n, moment_ns=None):

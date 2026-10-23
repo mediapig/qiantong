@@ -14,6 +14,7 @@ import re
 import subprocess
 import sys
 import time
+import urllib.request
 
 from qiantong import location
 from qiantong.plugins import get
@@ -35,6 +36,9 @@ NEUTRAL_ZONES = ("Etc/", "UTC", "GMT", "Universal", "Zulu")
 
 COUNTRY_TEMPLE = {"JP": SENSOJI, "TW": TAIWAN, "HK": WONGTAISIN}
 COUNTRY_NAME = {"JP": "日本", "TW": "台湾", "HK": "香港"}
+
+IP_URL = "https://1.1.1.1/cdn-cgi/trace"
+IP_TIMEOUT = 2
 
 # (votes, rank used to break ties: time zone, then IP, then language)
 TIME_ZONE = (3, 3)
@@ -105,8 +109,14 @@ def _timezone():
 
 
 def _country():
-    """Return no IP signal; routing must not contact an external service."""
-    return None
+    """Return the two-letter country code of the public IP when available."""
+    try:
+        with urllib.request.urlopen(IP_URL, timeout=IP_TIMEOUT) as resp:
+            text = resp.read().decode("ascii", "ignore")
+    except Exception:
+        return None
+    match = re.search(r"^loc=([A-Z]{2})$", text, re.M)
+    return match[1] if match else None
 
 
 def _zone_vote(tz):

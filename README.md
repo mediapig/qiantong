@@ -17,7 +17,7 @@ pipx install qiantong
 pip install qiantong
 
 # Latest code from GitHub
-uv tool install git+https://github.com/mediapig/qiantong.git
+uv tool install qiantong
 ```
 
 After installing, run `qiantong` or `chouqian`.
@@ -68,6 +68,7 @@ At startup the program guesses where you are and shows the lot choices available
 | --- | --- | --- |
 | GPS | 5 | Uses the macOS Core Location helper, an explicit `QIANTONG_LOCATION`, or a local gpsd socket. Abstains when unavailable or too inaccurate. |
 | Time zone | 3 | Usually set automatically from your location, so the strongest hint. `UTC` and the like abstain. |
+| IP country | 2 | Looked up when online; a VPN or proxy shows the exit country. Abstains if the lookup fails. |
 | System language | 2 | Says who you are rather than where you are. `zh-TW` selects Taiwan Traditional Chinese, `zh-HK`/`zh-MO` selects Hong Kong Traditional Chinese, and `zh-SG`/`zh-MY` stays on Simplified Chinese. macOS reads the system preferences, Windows the UI language, other systems `LANG` and related variables. Languages unrelated to a region, such as English, abstain. |
 
 Each signal votes for Japan (Sensō-ji), Taiwan (Sixty Jiazi lots), Hong Kong (Wong Tai Sin lots) or anywhere else (Guanyin lots). The place with the most votes wins; a tie goes to the signal ranked higher in the table. After the region is selected, the first page lets you choose its available thematic pack, such as Guanyin, Guandi, Yue Lao, Caishen or Wenchang, before the ritual starts.
@@ -119,21 +120,20 @@ The 100 traditional Wong Tai Sin lots associated with Sik Sik Yuen in Hong Kong.
 
 Every result is decided at the moment you press space to stop. The animation is only for show and has no effect on the outcome.
 
-**Local cryptographic randomness.** Every draw uses Python's standard `secrets` module, backed by the operating system's cryptographic random number generator. The program does not contact a random-number service, so draws work offline and do not depend on a third-party endpoint.
+**Quantum random numbers by default.** At startup the program fetches a batch of quantum random bytes into a pool. If the service is unavailable, it falls back to Python's standard `secrets` module, backed by the operating system's cryptographic random number generator. The service address is intentionally not shown in the interface or documentation.
 
 Each draw takes 32 random bytes, appends the nanosecond timestamp of your key press, hashes them with SHA-256, and maps the result onto the target range by rejection sampling. Every lot therefore has a probability of exactly 1/100, and each block is yin or yang with probability exactly 1/2.
 
 ## Data sources
 
-- Guanyin lots: from [yanxinyu777-beep/guanyin-lingqian-100](https://github.com/yanxinyu777-beep/guanyin-lingqian-100).
-- Sixty Jiazi lots: from [DestinyLab/lottery-poetry-sixty-jiazi](https://github.com/DestinyLab/lottery-poetry-sixty-jiazi) (MIT License, by Lance He), converted from YAML to JSON.
-- Sensō-ji Kannon lots (Chinese translation): from [Tamshen/senso-ji-stick-data](https://github.com/Tamshen/senso-ji-stick-data); the fortune entries of lots 6–9 were reformatted.
-- Wong Tai Sin lots: from the [Kau Cim 100 public-domain reference dataset](https://www.kaucim.ai/reference/wong-tai-sin-kau-cim), checked against the Sik Sik Yuen Wong Tai Sin Temple stick enquiry.
+The built-in fortune data was assembled from public cultural references and
+adapted into local JSON packs. The project does not print or document the
+third-party service addresses used by the optional random and IP providers.
 
 Guanyin lot texts vary slightly between regions. For entertainment and cultural interest only.
 
 ## License
 
-The code is released under the [MIT License](https://github.com/mediapig/qiantong/blob/main/LICENSE): anyone may use, modify and distribute it freely.
+The code is released under the MIT License: anyone may use, modify and distribute it freely.
 
 The fortune data in `src/qiantong/data/` comes from the third-party repositories listed above, and its copyright remains with the original authors. The Sixty Jiazi data (`taiwan.json`) is under the MIT License of its source repository; the Guanyin and Sensō-ji data come without a license and are not covered by the MIT License of this project.
